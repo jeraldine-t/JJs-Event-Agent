@@ -65,7 +65,9 @@ pytest
 
 ## LinkedIn session
 
-The simplest option is the value of LinkedIn's `li_at` session cookie:
+The current public deployment intentionally keeps LinkedIn login data **off GitHub**, including GitHub Actions Secrets. Authenticated LinkedIn collection is performed through the signed-in local browser; only qualifying event fields are rendered into `index.html`.
+
+For a trusted local or self-hosted machine, the scraper also supports the value of LinkedIn's `li_at` session cookie in a local `.env`:
 
 ```dotenv
 LINKEDIN_LI_AT=your_value_here
@@ -77,25 +79,23 @@ Alternatively, `LINKEDIN_COOKIES_JSON` accepts a Playwright-compatible JSON arra
 [{"name":"li_at","value":"...","domain":".linkedin.com","path":"/","secure":true,"httpOnly":true}]
 ```
 
-Use your browser's built-in developer tools while signed in to obtain your own session cookie. Treat the value like a password. If LinkedIn redirects to login or a checkpoint, refresh the cookie manually; the agent deliberately does not bypass the checkpoint.
+Treat the value like a password. Never commit it, paste it into chat, or upload it to this public repository. If LinkedIn redirects to login or a checkpoint, refresh the local session manually; the agent deliberately does not bypass the checkpoint.
 
-The included login helper can create the cookie JSON without putting a password in `.env` or chat:
+The included login helper can create ignored local cookie JSON for a self-hosted run:
 
 ```bash
 python -m event_agent.bootstrap cookies linkedin
-gh secret set LINKEDIN_COOKIES_JSON < .state/linkedin-cookies.json
 ```
 
 ## Eventbrite session
 
-Eventbrite public search rejects plain hosted HTTP requests, so its adapter uses Playwright. Export a signed-in browser session and store it as a repository secret:
+Eventbrite public search rejects plain hosted HTTP requests, so its adapter uses Playwright. The current deployment reuses the signed-in local browser for authenticated manual collection and does not upload the session to GitHub. A trusted self-hosted machine can create an ignored local session file with:
 
 ```bash
 python -m event_agent.bootstrap cookies eventbrite
-gh secret set EVENTBRITE_COOKIES_JSON < .state/eventbrite-cookies.json
 ```
 
-The exported array preserves the correct `.eventbrite.com` and `.eventbrite.sg` cookie domains. Rotate the session if Eventbrite returns a sign-in page or access challenge.
+The exported array preserves the correct `.eventbrite.com` and `.eventbrite.sg` cookie domains. Keep it local and rotate it if Eventbrite returns a sign-in page or access challenge.
 
 ## Lu.ma session and private links
 
@@ -127,16 +127,9 @@ The two monitored chats are exact-name matches:
 - `Codex Community - Main Chat`
 - `non-RWA events, programs, initiatives`
 
-## GitHub Actions Secrets and variables
+## GitHub Actions privacy and variables
 
-In the repository, go to **Settings → Secrets and variables → Actions**. Create these repository secrets:
-
-| Secret | Required for |
-|---|---|
-| `LINKEDIN_LI_AT` or `LINKEDIN_COOKIES_JSON` | LinkedIn |
-| `EVENTBRITE_COOKIES_JSON` | Authenticated Eventbrite browser session |
-| `LUMA_COOKIES_JSON` | Account-visible Lu.ma events |
-| `LUMA_PRIVATE_URLS` | Known private/unlisted Lu.ma links |
+The public repository is intentionally configured with **zero GitHub Actions Secrets**. LinkedIn cookies, Eventbrite cookies, passwords, browser profiles, and raw source messages must stay on the local machine and must never be committed or uploaded as artifacts.
 
 Optional repository variables:
 
@@ -147,15 +140,17 @@ Optional repository variables:
 
 The workflow explicitly requests `contents: write`, `pages: write`, and `id-token: write`. If an organization policy restricts `GITHUB_TOKEN`, allow Actions read/write access under **Settings → Actions → General → Workflow permissions**, or the dashboard commit will fail.
 
-Secrets are passed to the process as environment variables at runtime. GitHub masks exact secret values in logs, but you should still avoid debug logging and rotate any credential that is accidentally exposed.
-
 ## Schedule, dashboard commit, and GitHub Pages
 
-`.github/workflows/scraper.yml` runs at **8:00 AM every Sunday in `Asia/Singapore`**, and also supports manual runs from the Actions tab. It:
+`.github/workflows/scraper.yml` runs at **8:00 AM every Sunday in `Asia/Singapore`**, and also supports manual runs from the Actions tab. Scheduled cloud runs can access only anonymous/public sources unless a trusted self-hosted runner is configured. If an automated scrape returns zero events, the workflow preserves the last populated dashboard.
+
+For a privacy-preserving deployment after a local authenticated scrape, run the workflow manually with `refresh_data=false`. It deploys the committed sanitized dashboard without running source collectors.
+
+The workflow:
 
 1. installs and tests the package;
-2. installs Playwright Chromium;
-3. runs all configured source adapters;
+2. installs Playwright Chromium when source collection is enabled;
+3. optionally runs the configured source adapters;
 4. overwrites `index.html`;
 5. commits and pushes `index.html` if it changed; and
 6. uploads only `index.html` plus `.nojekyll` as the public Pages artifact.
