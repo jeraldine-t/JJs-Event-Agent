@@ -38,14 +38,16 @@ def _trim_summary(text: str, limit: int = SUMMARY_WORD_LIMIT) -> str:
 
 def _event_summary(event: Event) -> str:
     topics = ", ".join(event.keywords[:3]) or "professional"
+    admission_prefix = "A free" if event.free_evidence else "An upcoming"
     fallback = _trim_summary(
-        f"A free {topics} event in {event.location}. It fits the curated "
+        f"{admission_prefix} {topics} event in {event.location}. It fits the curated "
         "Singapore timing window; open the registration page for the organizer's "
         "agenda and latest details."
     )
     if event.source.casefold() in PRIVATE_TEXT_SOURCES:
         return _trim_summary(
-            f"A free {topics} event in Singapore, shared through {event.source}. "
+            f"{admission_prefix} {topics} event in Singapore, shared through "
+            f"{event.source}. "
             "Open the registration page for the organizer's public description and latest details."
         )
     summary = _trim_summary(event.description)
@@ -72,6 +74,8 @@ def _event_row(event: Event) -> dict:
             "fnb_perks": fnb_perks,
             "has_fnb": bool(fnb_perks),
             "fnb_label": ", ".join(fnb_perks) if fnb_perks else "Not stated",
+            "free_confirmed": bool(event.free_evidence),
+            "admission_label": "$0 confirmed" if event.free_evidence else "Price not stated",
             "keywords": [
                 keyword for keyword in event.keywords if keyword not in event.perks
             ],
@@ -138,6 +142,8 @@ def render_dashboard(
         source_names=sorted({event.source for event in events}),
         breakdowns={
             "fnb": fnb_count,
+            "free_confirmed": sum(bool(event.free_evidence) for event in events),
+            "price_unconfirmed": sum(not event.free_evidence for event in events),
             "weekday": sum(event.start_at.weekday() < 5 for event in events),
             "weekend": sum(event.start_at.weekday() >= 5 for event in events),
             "networking": sum("Networking" in event.perks for event in events),

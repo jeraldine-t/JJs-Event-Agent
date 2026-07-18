@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="A calendar of curated free AI, tech, robotics, marketing, business, and networking events in Singapore.">
+  <meta name="description" content="A calendar of curated AI, tech, robotics, marketing, business, and networking events in Singapore with admission confidence and F&amp;B status.">
   <title>JJs Event Agent · Singapore</title>
   <style>
     :root {
@@ -18,6 +18,7 @@
       --mint: #68e9bd;
       --peach: #ffb78f;
       --blue: #9fc5ff;
+      --amber: #f3d38a;
       --shadow: 0 24px 70px rgba(0, 0, 0, .25);
     }
     * { box-sizing: border-box; }
@@ -44,13 +45,14 @@
     }
     .count strong { display: block; color: var(--lime); font-size: 44px; line-height: 1; }
     .count span { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .12em; }
-    .breakdowns { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 28px 0 22px; }
+    .breakdowns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 28px 0 22px; }
     .stat { padding: 16px 18px; border: 1px solid var(--line); border-radius: 18px; background: rgba(15, 32, 28, .68); }
     .stat strong { display: block; margin-bottom: 3px; font-size: 24px; color: var(--text); }
     .stat span { color: var(--muted); font-size: 12px; }
     .stat.fnb strong { color: var(--peach); }
+    .stat.price-unknown strong { color: var(--amber); }
     .toolbar {
-      display: grid; grid-template-columns: minmax(220px, 1fr) 190px 190px; gap: 10px;
+      display: grid; grid-template-columns: minmax(220px, 1fr) repeat(3, 180px); gap: 10px;
       position: sticky; top: 12px; z-index: 5; margin: 0 0 34px; padding: 10px;
       border: 1px solid var(--line); border-radius: 20px; background: rgba(8, 19, 16, .88); backdrop-filter: blur(20px);
     }
@@ -82,6 +84,7 @@
     .source { color: var(--mint); font-size: 11px; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
     .pill { border-radius: 999px; padding: 4px 8px; font-size: 10px; font-weight: 850; text-transform: uppercase; letter-spacing: .04em; }
     .free { color: #07110f; background: var(--lime); }
+    .price-unknown { color: var(--amber); border: 1px solid rgba(243, 211, 138, .3); background: rgba(243, 211, 138, .08); }
     .window { color: var(--blue); border: 1px solid rgba(159, 197, 255, .25); background: rgba(159, 197, 255, .07); }
     .event-card h3 { margin: 15px 0 9px; font-size: clamp(21px, 3vw, 29px); line-height: 1.12; letter-spacing: -.025em; }
     .summary { max-width: 760px; margin: 0; color: #c5d7d0; }
@@ -130,14 +133,16 @@
   <main class="shell">
     <header>
       <div>
-        <div class="eyebrow">Singapore · Free events only</div>
+        <div class="eyebrow">Singapore · Curated event intel</div>
         <h1>Your social calendar, curated.</h1>
-        <p class="intro">Free AI, tech, robotics, marketing, business and networking events—organized by date, with food and drink clearly called out.</p>
+        <p class="intro">AI, tech, robotics, marketing, business and networking events—organized by date, with admission confidence and food or drink clearly called out.</p>
       </div>
       <div class="count"><strong id="visible-count">{{ events|length }}</strong><span>events showing</span></div>
     </header>
 
     <section class="breakdowns" aria-label="Event breakdowns">
+      <div class="stat"><strong>{{ breakdowns.free_confirmed }}</strong><span>confirmed free</span></div>
+      <div class="stat price-unknown"><strong>{{ breakdowns.price_unconfirmed }}</strong><span>price not stated</span></div>
       <div class="stat fnb"><strong>{{ breakdowns.fnb }}</strong><span>with explicit F&amp;B</span></div>
       <div class="stat"><strong>{{ breakdowns.weekday }}</strong><span>weekday evenings</span></div>
       <div class="stat"><strong>{{ breakdowns.weekend }}</strong><span>weekend daytime</span></div>
@@ -155,6 +160,11 @@
         <option value="yes">F&amp;B mentioned</option>
         <option value="no">F&amp;B not stated</option>
       </select>
+      <select class="select" id="price" aria-label="Filter by admission confidence">
+        <option value="">Any admission status</option>
+        <option value="confirmed">Confirmed free</option>
+        <option value="unconfirmed">Price not stated</option>
+      </select>
     </div>
 
     <section id="events" aria-live="polite" aria-label="Event calendar">
@@ -166,9 +176,9 @@
           <div class="day-rail"><strong>{{ day.day_number }}</strong><span>{{ day.weekday }}</span></div>
           <div class="day-events">
             {% for event in day.events %}
-            <article class="event-card{% if event.has_fnb or 'Networking' in event.perks %} featured{% endif %}" data-search="{{ (event.title ~ ' ' ~ event.summary ~ ' ' ~ event.location ~ ' ' ~ event.source ~ ' ' ~ event.perks|join(' ') ~ ' ' ~ event.keywords|join(' '))|lower }}" data-source="{{ event.source|lower }}" data-fnb="{{ 'yes' if event.has_fnb else 'no' }}">
+            <article class="event-card{% if event.has_fnb or 'Networking' in event.perks %} featured{% endif %}" data-search="{{ (event.title ~ ' ' ~ event.summary ~ ' ' ~ event.location ~ ' ' ~ event.source ~ ' ' ~ event.admission_label ~ ' ' ~ event.perks|join(' ') ~ ' ' ~ event.keywords|join(' '))|lower }}" data-source="{{ event.source|lower }}" data-fnb="{{ 'yes' if event.has_fnb else 'no' }}" data-price="{{ 'confirmed' if event.free_confirmed else 'unconfirmed' }}">
               <div class="event-main">
-                <div class="topline"><span class="source">{{ event.source }}</span><span class="pill free">$0 verified</span><span class="pill window">{{ event.day_type }}</span></div>
+                <div class="topline"><span class="source">{{ event.source }}</span><span class="pill {{ 'free' if event.free_confirmed else 'price-unknown' }}">{{ event.admission_label }}</span><span class="pill window">{{ event.day_type }}</span></div>
                 <h3>{{ event.title }}</h3>
                 <p class="summary">{{ event.summary }}</p>
                 <div class="tags">
@@ -193,7 +203,7 @@
       {% endfor %}
       <div class="empty" id="empty"{% if events %} hidden{% endif %}>
         <h2>No matches yet.</h2>
-        <p>{% if events %}Try a broader search or reset the source and F&amp;B filters.{% else %}The latest run found no events that met every strict filter. Check back after the next Sunday refresh.{% endif %}</p>
+        <p>{% if events %}Try a broader search or reset the source, admission, and F&amp;B filters.{% else %}The latest run found no events that met the topic, location, date, and timing filters. Check back after the next Sunday refresh.{% endif %}</p>
       </div>
     </section>
 
@@ -206,12 +216,13 @@
       </div>
       <p><small>Accepted {{ report.accepted }}. Rejections: {% for reason, count in report.rejected.items() %}{{ reason }}={{ count }}{% if not loop.last %}, {% endif %}{% else %}none{% endfor %}.</small></p>
     </details>
-    <footer>Times shown in Singapore Time (SGT). F&amp;B means the source explicitly mentions food or drinks; “not stated” never assumes none will be served. “$0 verified” requires explicit free-admission evidence.</footer>
+    <footer>Times shown in Singapore Time (SGT). “Price not stated” means no admission price was found; it does not guarantee free entry. Events with an explicit paid price are excluded. F&amp;B means the source explicitly mentions food or drinks.</footer>
   </main>
   <script>
     const search = document.querySelector('#search');
     const source = document.querySelector('#source');
     const fnb = document.querySelector('#fnb');
+    const price = document.querySelector('#price');
     const cards = [...document.querySelectorAll('.event-card')];
     const days = [...document.querySelectorAll('.calendar-day')];
     const months = [...document.querySelectorAll('.calendar-month')];
@@ -221,11 +232,13 @@
       const query = search.value.trim().toLowerCase();
       const selectedSource = source.value;
       const selectedFnb = fnb.value;
+      const selectedPrice = price.value;
       let visible = 0;
       cards.forEach(card => {
         const show = (!query || card.dataset.search.includes(query))
           && (!selectedSource || card.dataset.source === selectedSource)
-          && (!selectedFnb || card.dataset.fnb === selectedFnb);
+          && (!selectedFnb || card.dataset.fnb === selectedFnb)
+          && (!selectedPrice || card.dataset.price === selectedPrice);
         card.hidden = !show;
         if (show) visible += 1;
       });
@@ -241,6 +254,7 @@
     search.addEventListener('input', filterCards);
     source.addEventListener('change', filterCards);
     fnb.addEventListener('change', filterCards);
+    price.addEventListener('change', filterCards);
   </script>
 </body>
 </html>

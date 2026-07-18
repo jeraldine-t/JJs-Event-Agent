@@ -62,6 +62,9 @@ def test_public_summary_is_strictly_less_than_100_words(tmp_path) -> None:
 def test_dashboard_marks_fnb_as_not_stated(tmp_path) -> None:
     without_fnb = event(source="Eventbrite", description="A concise public summary.")
     without_fnb.perks = ("Networking",)
+    without_fnb.free_evidence = ""
     html = render(tmp_path, [without_fnb])
     assert 'data-fnb="no"' in html
+    assert 'data-price="unconfirmed"' in html
     assert "Not stated" in html
+    assert "Price not stated" in html

@@ -53,7 +53,19 @@ def test_free_food_does_not_prove_free_admission() -> None:
     )
     events, report = curate_events([raw], keywords=("AI",), now=NOW, lookahead_days=90)
     assert events == []
-    assert report.rejected["not-explicitly-free"] == 1
+    assert report.rejected["explicitly-paid"] == 1
+
+
+def test_unstated_price_is_included_but_not_marked_free() -> None:
+    raw = candidate(
+        datetime(2026, 7, 13, 19, 0, tzinfo=SGT),
+        "AI builders meetup with external registration",
+        price="External registration",
+    )
+    events, report = curate_events([raw], keywords=("AI",), now=NOW, lookahead_days=90)
+    assert len(events) == 1
+    assert events[0].free_evidence == ""
+    assert report.accepted == 1
 
 
 def test_perks_raise_priority() -> None:

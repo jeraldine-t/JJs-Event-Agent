@@ -1,6 +1,6 @@
 # JJs Event Agent
 
-JJs Event Agent discovers upcoming **free ($0)** events in Singapore, applies strict timing and topic rules, and publishes the curated result to a responsive, self-contained calendar dashboard deployed with GitHub Pages.
+JJs Event Agent discovers relevant upcoming events in Singapore, applies strict timing and topic rules, and publishes the curated result to a responsive, self-contained calendar dashboard deployed with GitHub Pages. Confirmed-free and price-unstated events are labelled separately.
 
 The repository is public so GitHub Pages works on the current account plan. No live credentials, browser profiles, cookies, or private message bodies belong in Git. The Pages artifact contains only the curated fields shown on each card. Summaries from private-message sources are generated from safe event metadata rather than copied from private posts.
 
@@ -10,7 +10,7 @@ An event is included only when all of these checks pass:
 
 - **Topic:** at least one of AI, Tech, Robotics, Marketing, Business, or Networking.
 - **Location:** the listing or message explicitly identifies Singapore or a recognized Singapore area.
-- **Price:** admission is explicitly stated as free, $0, no cost, or equivalent. “Free food” by itself does **not** prove free admission.
+- **Price:** confirmed-free and price-unstated events are accepted. Listings with an explicit paid admission price are rejected. “Free food” by itself does **not** prove free admission.
 - **Date:** the event is upcoming and within `LOOKAHEAD_DAYS` (90 by default).
 - **Time:** Monday–Friday strictly after 6:00 PM SGT; Saturday–Sunday from 6:00 AM through 5:59 PM SGT.
 
@@ -29,11 +29,11 @@ Events mentioning free food, free drinks, pizza, beer, wine, refreshments, refre
 
 Each source is isolated. A logged-out or changed site reports a source failure while other sources continue and the dashboard is still regenerated. Set `SOURCE_FAILURE_MODE=fail` to make the run fail after the dashboard is produced.
 
-GDG is intentionally conservative: a label such as “external registration” is not treated as free. The source must explicitly say “free registration,” “free admission,” or provide another real $0 signal before the event can pass the price filter.
+An ambiguous label such as “external registration” is accepted as **Price not stated**, never as confirmed free. An explicit paid ticket price still fails the filter.
 
 ## Dashboard views and summaries
 
-Events are grouped chronologically by month and day, with weekday evenings and weekend daytime events shown in the same calendar-style agenda. The summary tiles break down explicit F&B, weekday, weekend, and networking counts. Search can be combined with source and F&B filters.
+Events are grouped chronologically by month and day, with weekday evenings and weekend daytime events shown in the same calendar-style agenda. The summary tiles break down confirmed-free, price-unstated, explicit F&B, weekday, weekend, and networking counts. Search can be combined with source, admission-confidence, and F&B filters.
 
 Every event card includes a summary of at most 99 words. Public event-page descriptions may be condensed into that summary. LinkedIn and WhatsApp message bodies are never copied into the public page; their cards receive a short metadata-based summary instead. “F&B not stated” means only that the source did not explicitly mention food or drinks—it does not claim that none will be served.
 
@@ -183,7 +183,7 @@ Every supported variable is documented in `.env.example`. Useful tuning values i
 
 ## Troubleshooting
 
-- **Empty dashboard:** inspect the expandable run-health panel and Actions logs. Strict $0, Singapore, keyword, date, and time filters intentionally reject ambiguous listings.
+- **Empty dashboard:** inspect the expandable run-health panel and Actions logs. Singapore, keyword, date, timing, and explicit-paid-price filters intentionally reject out-of-scope listings.
 - **LinkedIn checkpoint:** refresh your own session cookie. Do not automate checkpoint or CAPTCHA bypass.
 - **Eventbrite login/challenge:** refresh `EVENTBRITE_COOKIES_JSON`; the agent does not bypass access challenges.
 - **Lu.ma private event missing:** add its exact link to the secret `LUMA_PRIVATE_URLS` and refresh the cookies.

@@ -45,6 +45,19 @@ EXPLICIT_FREE_PATTERNS: tuple[re.Pattern[str], ...] = (
 )
 
 EXACT_FREE_VALUES = {"0", "0.00", "$0", "$0.00", "s$0", "sgd 0", "free"}
+PRICE_AMOUNT_RE = re.compile(r"(?:SGD|S\$|\$)\s*(\d+(?:\.\d{1,2})?)", re.I)
+PAID_TICKET_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(
+        r"\b(?:tickets?|admission|entry|registration)\b.{0,24}?"
+        r"(?:SGD|S\$|\$)\s*(\d+(?:\.\d{1,2})?)",
+        re.I,
+    ),
+    re.compile(
+        r"(?:SGD|S\$|\$)\s*(\d+(?:\.\d{1,2})?).{0,16}?"
+        r"\b(?:per\s+(?:person|pax)|tickets?|admission|entry|registration)\b",
+        re.I,
+    ),
+)
 
 
 def _keywords(text: str, configured: tuple[str, ...]) -> tuple[str, ...]:
@@ -74,6 +87,30 @@ def _free_evidence(raw: RawEvent, text: str) -> str:
         match = pattern.search(" ".join((raw.price_text, text)))
         if match:
             return match.group(0).strip()
+    return ""
+
+
+def _positive_amount(match: re.Match[str]) -> bool:
+    try:
+        return float(match.group(1)) > 0
+    except (TypeError, ValueError):
+        return False
+
+
+def _paid_evidence(raw: RawEvent, text: str) -> str:
+    structured_price = raw.metadata.get("structured_price")
+    try:
+        if structured_price is not None and float(structured_price) > 0:
+            return f"Structured ticket price: {structured_price}"
+    except (TypeError, ValueError):
+        pass
+    for match in PRICE_AMOUNT_RE.finditer(raw.price_text):
+        if _positive_amount(match):
+            return match.group(0).strip()
+    for pattern in PAID_TICKET_PATTERNS:
+        for match in pattern.finditer(text):
+            if _positive_amount(match):
+                return match.group(0).strip()
     return ""
 
 
@@ -116,8 +153,8 @@ def curate_events(
             report.reject("location")
             continue
         free_evidence = _free_evidence(raw, text)
-        if not free_evidence:
-            report.reject("not-explicitly-free")
+        if not free_evidence and _paid_evidence(raw, text):
+            report.reject("explicitly-paid")
             continue
         if raw.start_at is None:
             report.reject("missing-date")
