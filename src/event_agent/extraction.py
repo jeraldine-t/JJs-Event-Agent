@@ -8,6 +8,7 @@ from typing import Any
 from urllib.parse import urljoin
 from zoneinfo import ZoneInfo
 
+import dateparser
 from bs4 import BeautifulSoup
 from dateparser.search import search_dates
 from dateutil import parser as dateutil_parser
@@ -22,6 +23,13 @@ PRICE_LINE_RE = re.compile(
 LOCATION_RE = re.compile(
     r"\b(?:singapore|sg|one[- ]north|raffles place|marina bay|orchard|bugis|"
     r"tanjong pagar|clarke quay|suntec|jurong|paya lebar|changi)\b",
+    re.IGNORECASE,
+)
+DATE_TIME_LINE_RE = re.compile(
+    r"\b(?:Mon(?:day)?|Tue(?:sday)?|Wed(?:nesday)?|Thu(?:rsday)?|Fri(?:day)?|"
+    r"Sat(?:urday)?|Sun(?:day)?|Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|"
+    r"Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|"
+    r"Dec(?:ember)?)\b.*\b\d{1,2}(?::\d{2})?\s*(?:AM|PM)\b",
     re.IGNORECASE,
 )
 
@@ -171,6 +179,22 @@ def _find_future_datetime(
         "RELATIVE_BASE": reference_time,
         "STRICT_PARSING": False,
     }
+    line_values: list[datetime] = []
+    for line in text.splitlines():
+        candidate = re.sub(r"[•·]", " ", line)
+        candidate = re.sub(r"\+\s*\d+\s+more.*$", "", candidate, flags=re.I).strip()
+        if not DATE_TIME_LINE_RE.search(candidate):
+            continue
+        try:
+            value = dateparser.parse(candidate, languages=["en"], settings=settings)
+        except (TypeError, ValueError, OverflowError):
+            value = None
+        aware = parse_datetime(value, timezone)
+        if aware and aware >= reference_time:
+            line_values.append(aware)
+    if line_values:
+        return min(line_values)
+
     try:
         matches = search_dates(text, languages=["en"], settings=settings) or []
     except (TypeError, ValueError, OverflowError):
@@ -201,8 +225,12 @@ def extract_event_from_text(
         return None
     lines = [line.strip() for line in cleaned.splitlines() if line.strip()]
     urls = [match.rstrip(".,;:!?") for match in URL_RE.findall(cleaned)]
-    location_lines = [line for line in lines if LOCATION_RE.search(line)]
-    price_lines = [line for line in lines if PRICE_LINE_RE.search(line)]
+    location_lines = [line for line in lines[1:] if LOCATION_RE.search(line)]
+    if not location_lines:
+        location_lines = [line for line in lines if LOCATION_RE.search(line)]
+    price_lines = [line for line in lines[1:] if PRICE_LINE_RE.search(line)]
+    if not price_lines:
+        price_lines = [line for line in lines if PRICE_LINE_RE.search(line)]
     return RawEvent(
         source=source,
         title=_best_title(lines),

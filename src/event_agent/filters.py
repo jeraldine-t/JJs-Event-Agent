@@ -129,7 +129,12 @@ def curate_events(
         if not _valid_time_window(start_at):
             report.reject("time-window")
             continue
-        perks = _perks(text)
+        perk_text = "\n".join(
+            value for value in (raw.title, raw.description, raw.raw_text) if value
+        )
+        if raw.location:
+            perk_text = perk_text.replace(raw.location, " ")
+        perks = _perks(perk_text)
         score = len(perks) * 20 + len(matched_keywords) * 3
         if any(perk in perks for perk in ("Free food", "Free drinks", "Pizza", "Beer", "Wine")):
             score += 15

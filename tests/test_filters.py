@@ -74,6 +74,17 @@ def test_perks_raise_priority() -> None:
     assert events[0].perks == ("Pizza", "Beer", "Refreshments", "Networking")
 
 
+def test_venue_name_does_not_count_as_a_provided_perk() -> None:
+    raw = candidate(
+        datetime(2026, 7, 14, 19, 0, tzinfo=SGT),
+        "Free admission to an AI event\nSingapore Craft Beer Bar",
+    )
+    raw.title = "AI builders night"
+    raw.location = "Singapore Craft Beer Bar"
+    events, _report = curate_events([raw], keywords=("AI",), now=NOW, lookahead_days=90)
+    assert events[0].perks == ()
+
+
 def test_requires_singapore_location_and_keyword() -> None:
     no_location = candidate(
         datetime(2026, 7, 13, 19, 0, tzinfo=SGT), "Free AI event"
@@ -90,4 +101,3 @@ def test_requires_singapore_location_and_keyword() -> None:
     )
     assert events == []
     assert report.rejected == {"location": 1, "keyword": 1}
-

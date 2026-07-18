@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
-TRACKING_QUERY_PREFIXES = ("utm_", "trk", "tracking", "ref", "source")
+TRACKING_QUERY_PREFIXES = ("utm_", "trk", "tracking", "ref", "source", "aff")
 
 
 def canonical_url(url: str) -> str:
@@ -86,4 +86,3 @@ class FilterReport:
 
     def reject(self, reason: str) -> None:
         self.rejected[reason] = self.rejected.get(reason, 0) + 1
-
