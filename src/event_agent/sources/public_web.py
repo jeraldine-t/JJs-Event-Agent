@@ -35,23 +35,18 @@ def _candidate_cards(html: str, page_url: str, host_hint: str) -> list[dict[str,
     return cards
 
 
-class PublicWebSource:
-    def __init__(self, name: str) -> None:
-        self.name = name
+class MeetupSource:
+    name = "Meetup"
 
-    def _urls(self, settings: Settings) -> tuple[str, ...]:
+    @staticmethod
+    def _urls(settings: Settings) -> tuple[str, ...]:
         query = quote_plus(" ".join(settings.keywords))
-        if self.name == "Eventbrite":
-            return settings.eventbrite_search_urls or (
-                f"https://www.eventbrite.sg/d/singapore--singapore/free--events/?q={query}",
-            )
         return settings.meetup_search_urls or (
             f"https://www.meetup.com/find/?keywords={query}&location=sg--Singapore&source=EVENTS",
         )
 
     def collect(self, settings: Settings) -> list[RawEvent]:
         now = datetime.now(settings.timezone)
-        host_hint = "eventbrite." if self.name == "Eventbrite" else "meetup.com"
         session = requests.Session()
         session.headers.update(
             {
@@ -61,7 +56,7 @@ class PublicWebSource:
         )
         events: list[RawEvent] = []
         for url in self._urls(settings):
-            LOGGER.info("Fetching %s search page: %s", self.name, url)
+            LOGGER.info("Fetching Meetup search page: %s", url)
             response = session.get(url, timeout=settings.http_timeout_seconds)
             response.raise_for_status()
             events.extend(
@@ -72,7 +67,7 @@ class PublicWebSource:
                     timezone=settings.timezone,
                 )
             )
-            cards = _candidate_cards(response.text, url, host_hint)
+            cards = _candidate_cards(response.text, url, "meetup.com")
             events.extend(
                 extract_events_from_cards(
                     cards,
@@ -83,14 +78,3 @@ class PublicWebSource:
                 )
             )
         return events
-
-
-class EventbriteSource(PublicWebSource):
-    def __init__(self) -> None:
-        super().__init__("Eventbrite")
-
-
-class MeetupSource(PublicWebSource):
-    def __init__(self) -> None:
-        super().__init__("Meetup")
-

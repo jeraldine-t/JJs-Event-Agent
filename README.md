@@ -5,7 +5,7 @@ JJs Event Agent discovers upcoming **free ($0)** events in Singapore, applies st
 1. a Telegram Bot message to your personal chat; and
 2. a responsive, self-contained `index.html` dashboard deployed with GitHub Pages.
 
-The repository is designed for a private GitHub repository. No live credentials, browser profiles, cookies, message bodies, or Telegram sessions belong in Git. The public Pages artifact contains only the curated fields shown on each card—not private message text.
+The repository is public so GitHub Pages works on the current account plan. No live credentials, browser profiles, cookies, or private message bodies belong in Git. The Pages artifact contains only the curated fields shown on each card—not private source text.
 
 ## What qualifies
 
@@ -25,14 +25,13 @@ Events mentioning free food, free drinks, pizza, beer, wine, refreshments, refre
 |---|---|---|---|
 | LinkedIn | Playwright | `li_at` or cookie JSON | Reads the Following page, then recent activity for followed profiles. |
 | Lu.ma | Playwright | Optional cookie JSON | Reads the Singapore listing, signed-in home view, and explicitly supplied private/unlisted URLs. |
-| Eventbrite | Requests + BeautifulSoup | None | Uses the Singapore free-events search and schema.org/card data. |
+| Eventbrite | Playwright | Cookie JSON | Uses an authenticated browser session for Singapore free-event search and event details. |
 | Meetup | Requests + BeautifulSoup | None | Uses the Singapore event search and schema.org/card data. |
 | WhatsApp | Playwright persistent context | Saved browser profile | Reads only the two exact configured groups and never sends messages. |
-| Telegram | Telethon User API | API ID/hash + StringSession | Reads only the `Events` forum topic in `@partnershipmatch` and `@claudesg`. |
 
 Each source is isolated. A logged-out or changed site reports a source failure while other sources continue, the dashboard is still regenerated, and the Telegram output is still attempted. Set `SOURCE_FAILURE_MODE=fail` to make the run fail after both outputs are produced.
 
-The default hosted schedule omits Eventbrite because its public search currently rejects GitHub-hosted HTTP requests. The adapter remains available for future use or custom `EVENTBRITE_SEARCH_URLS` overrides.
+Telegram channels are not ingested. Telegram remains only as the optional Bot notification destination.
 
 > Automated access can be limited by each platform's terms and UI changes. Use only accounts and content you are authorized to access. This project does not bypass CAPTCHAs, checkpoints, access controls, or rate limits.
 
@@ -41,7 +40,7 @@ The default hosted schedule omits Eventbrite because its public search currently
 Requirements: Python 3.11+ and a Chromium-compatible environment.
 
 ```bash
-git clone <your-private-repository-url>
+git clone https://github.com/jeraldine-t/JJs-Event-Agent.git
 cd JJs-Event-Agent
 python -m venv .venv
 source .venv/bin/activate
@@ -85,6 +84,24 @@ Alternatively, `LINKEDIN_COOKIES_JSON` accepts a Playwright-compatible JSON arra
 
 Use your browser's built-in developer tools while signed in to obtain your own session cookie. Treat the value like a password. If LinkedIn redirects to login or a checkpoint, refresh the cookie manually; the agent deliberately does not bypass the checkpoint.
 
+The included login helper can create the cookie JSON without putting a password in `.env` or chat:
+
+```bash
+python -m event_agent.bootstrap cookies linkedin
+gh secret set LINKEDIN_COOKIES_JSON < .state/linkedin-cookies.json
+```
+
+## Eventbrite session
+
+Eventbrite public search rejects plain hosted HTTP requests, so its adapter uses Playwright. Export a signed-in browser session and store it as a repository secret:
+
+```bash
+python -m event_agent.bootstrap cookies eventbrite
+gh secret set EVENTBRITE_COOKIES_JSON < .state/eventbrite-cookies.json
+```
+
+The exported array preserves the correct `.eventbrite.com` and `.eventbrite.sg` cookie domains. Rotate the session if Eventbrite returns a sign-in page or access challenge.
+
 ## Lu.ma session and private links
 
 Set `LUMA_COOKIES_JSON` to a Playwright-compatible JSON cookie array from your signed-in Lu.ma session. Add known private/unlisted event links to the comma-separated `LUMA_PRIVATE_URLS` value. The adapter also scans the authenticated home view for account-visible event links.
@@ -115,22 +132,6 @@ The two monitored chats are exact-name matches:
 - `Codex Community - Main Chat`
 - `non-RWA events, programs, initiatives`
 
-## Telegram User API for event ingestion
-
-1. Sign in at [my.telegram.org](https://my.telegram.org/) and open **API development tools**.
-2. Create an application and copy its `api_id` and `api_hash` into `.env`.
-3. Generate a Telethon StringSession interactively:
-
-   ```bash
-   python -m event_agent.bootstrap telegram
-   ```
-
-4. Complete Telegram's phone/code prompts and copy the printed value to `TELEGRAM_SESSION_STRING`.
-
-The StringSession grants account access. Store it only in your password manager, local `.env`, and GitHub Actions Secrets. Revoke it from Telegram's **Settings → Devices** if exposed.
-
-The adapter requests the exact `Events` forum topic in `@partnershipmatch` and `@claudesg`; it does not scan unrelated channel discussions.
-
 ## Telegram Bot output with BotFather
 
 1. In Telegram, open the verified [@BotFather](https://t.me/BotFather) chat.
@@ -150,16 +151,14 @@ The bot sends HTML-formatted messages in chunks below Telegram's size limit. Eve
 
 ## GitHub Actions Secrets and variables
 
-In the private repository, go to **Settings → Secrets and variables → Actions**. Create these repository secrets:
+In the repository, go to **Settings → Secrets and variables → Actions**. Create these repository secrets:
 
 | Secret | Required for |
 |---|---|
 | `LINKEDIN_LI_AT` or `LINKEDIN_COOKIES_JSON` | LinkedIn |
+| `EVENTBRITE_COOKIES_JSON` | Authenticated Eventbrite browser session |
 | `LUMA_COOKIES_JSON` | Account-visible Lu.ma events |
 | `LUMA_PRIVATE_URLS` | Known private/unlisted Lu.ma links |
-| `TELEGRAM_API_ID` | Telegram data source |
-| `TELEGRAM_API_HASH` | Telegram data source |
-| `TELEGRAM_SESSION_STRING` | Telegram data source |
 | `TELEGRAM_BOT_TOKEN` | Telegram output |
 | `MY_TELEGRAM_CHAT_ID` | Telegram output |
 
@@ -193,14 +192,14 @@ One-time Pages setup:
 2. Under **Build and deployment → Source**, select **GitHub Actions**.
 3. Run **Weekly event scrape and Pages deploy** from the Actions tab.
 
-The project URL will normally be `https://<owner>.github.io/JJs-Event-Agent/` and is recorded on the deployment job. GitHub Pages from a **private** repository requires a plan that supports private-repository Pages. Also note that a Pages site is generally public even when its source repository is private; this is why the workflow deploys only the sanitized single-page artifact.
+The live project URL is `https://jeraldine-t.github.io/JJs-Event-Agent/` and is recorded on the deployment job. The workflow deploys only the sanitized single-page artifact.
 
 ## Environment reference
 
 Every supported variable is documented in `.env.example`. Useful tuning values include:
 
 - `LOOKAHEAD_DAYS` and `MESSAGE_LOOKBACK_DAYS`;
-- LinkedIn profile/post caps and Lu.ma event caps;
+- LinkedIn profile/post caps and Eventbrite/Lu.ma event caps;
 - `EVENTBRITE_SEARCH_URLS` and `MEETUP_SEARCH_URLS` as pipe-separated overrides;
 - `SOURCE_FAILURE_MODE=warn|fail`;
 - `REQUIRE_TELEGRAM_OUTPUT=true|false`.
@@ -209,8 +208,8 @@ Every supported variable is documented in `.env.example`. Useful tuning values i
 
 - **Empty dashboard:** inspect the expandable run-health panel and Actions logs. Strict $0, Singapore, keyword, date, and time filters intentionally reject ambiguous listings.
 - **LinkedIn checkpoint:** refresh your own session cookie. Do not automate checkpoint or CAPTCHA bypass.
+- **Eventbrite login/challenge:** refresh `EVENTBRITE_COOKIES_JSON`; the agent does not bypass access challenges.
 - **Lu.ma private event missing:** add its exact link to the secret `LUMA_PRIVATE_URLS` and refresh the cookies.
 - **WhatsApp skipped in Actions:** use a self-hosted runner with the bootstrapped persistent directory.
-- **Telegram topic missing:** confirm the account can see the exact `Events` topic and the channel remains a forum.
 - **Pages deployment fails:** enable GitHub Actions as the Pages source and confirm the account plan supports Pages for private repositories.
 - **Site selector changed:** Playwright/BeautifulSoup adapters are isolated under `src/event_agent/sources/`; update the affected adapter and its tests without changing the filter/output pipeline.

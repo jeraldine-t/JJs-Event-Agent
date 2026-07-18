@@ -45,17 +45,14 @@ class Settings:
     linkedin_cookies_json: str
     linkedin_max_profiles: int
     linkedin_posts_per_profile: int
+    eventbrite_cookies_json: str
+    eventbrite_max_events: int
     luma_cookies_json: str
     luma_private_urls: tuple[str, ...]
     luma_max_events: int
     whatsapp_user_data_dir: Path
     whatsapp_groups: tuple[str, ...]
     whatsapp_messages_per_group: int
-    telegram_api_id: int | None
-    telegram_api_hash: str
-    telegram_session_string: str
-    telegram_channels: tuple[str, ...]
-    telegram_topic_name: str
     telegram_bot_token: str
     telegram_chat_id: str
     eventbrite_search_urls: tuple[str, ...]
@@ -71,7 +68,6 @@ class Settings:
         load_dotenv(root / ".env")
         output = Path(os.getenv("OUTPUT_HTML", "index.html"))
         whatsapp_dir = Path(os.getenv("WHATSAPP_USER_DATA_DIR") or ".state/whatsapp")
-        api_id_raw = os.getenv("TELEGRAM_API_ID", "").strip()
         return cls(
             root=root,
             timezone_name=os.getenv("TIMEZONE", "Asia/Singapore"),
@@ -81,7 +77,7 @@ class Settings:
             playwright_headless=_bool(os.getenv("PLAYWRIGHT_HEADLESS"), True),
             enabled_sources=_csv(
                 os.getenv("ENABLED_SOURCES"),
-                ("linkedin", "luma", "meetup", "telegram"),
+                ("linkedin", "eventbrite", "luma", "meetup"),
             ),
             output_html=output if output.is_absolute() else root / output,
             source_failure_mode=os.getenv("SOURCE_FAILURE_MODE", "warn").casefold(),
@@ -91,6 +87,8 @@ class Settings:
             linkedin_cookies_json=os.getenv("LINKEDIN_COOKIES_JSON", "").strip(),
             linkedin_max_profiles=int(os.getenv("LINKEDIN_MAX_PROFILES", "30")),
             linkedin_posts_per_profile=int(os.getenv("LINKEDIN_POSTS_PER_PROFILE", "12")),
+            eventbrite_cookies_json=os.getenv("EVENTBRITE_COOKIES_JSON", "").strip(),
+            eventbrite_max_events=int(os.getenv("EVENTBRITE_MAX_EVENTS", "80")),
             luma_cookies_json=os.getenv("LUMA_COOKIES_JSON", "").strip(),
             luma_private_urls=_csv(os.getenv("LUMA_PRIVATE_URLS")),
             luma_max_events=int(os.getenv("LUMA_MAX_EVENTS", "80")),
@@ -99,13 +97,6 @@ class Settings:
             ),
             whatsapp_groups=_pipes(os.getenv("WHATSAPP_GROUPS"), DEFAULT_WHATSAPP_GROUPS),
             whatsapp_messages_per_group=int(os.getenv("WHATSAPP_MESSAGES_PER_GROUP", "100")),
-            telegram_api_id=int(api_id_raw) if api_id_raw else None,
-            telegram_api_hash=os.getenv("TELEGRAM_API_HASH", "").strip(),
-            telegram_session_string=os.getenv("TELEGRAM_SESSION_STRING", "").strip(),
-            telegram_channels=_csv(
-                os.getenv("TELEGRAM_CHANNELS"), ("partnershipmatch", "claudesg")
-            ),
-            telegram_topic_name=os.getenv("TELEGRAM_TOPIC_NAME", "Events").strip(),
             telegram_bot_token=os.getenv("TELEGRAM_BOT_TOKEN", "").strip(),
             telegram_chat_id=os.getenv("MY_TELEGRAM_CHAT_ID", "").strip(),
             eventbrite_search_urls=_pipes(os.getenv("EVENTBRITE_SEARCH_URLS")),
