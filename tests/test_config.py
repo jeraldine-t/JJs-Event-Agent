@@ -7,3 +7,4 @@ def test_blank_whatsapp_path_uses_safe_ignored_default(tmp_path, monkeypatch) ->
     settings = Settings.from_env(tmp_path)
     assert settings.whatsapp_user_data_dir == tmp_path / ".state/whatsapp"
     assert "whatsapp" not in settings.enabled_sources
+    assert "eventbrite" not in settings.enabled_sources

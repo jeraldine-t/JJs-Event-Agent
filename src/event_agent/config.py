@@ -81,7 +81,7 @@ class Settings:
             playwright_headless=_bool(os.getenv("PLAYWRIGHT_HEADLESS"), True),
             enabled_sources=_csv(
                 os.getenv("ENABLED_SOURCES"),
-                ("linkedin", "luma", "eventbrite", "meetup", "telegram"),
+                ("linkedin", "luma", "meetup", "telegram"),
             ),
             output_html=output if output.is_absolute() else root / output,
             source_failure_mode=os.getenv("SOURCE_FAILURE_MODE", "warn").casefold(),

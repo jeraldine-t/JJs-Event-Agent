@@ -32,6 +32,8 @@ Events mentioning free food, free drinks, pizza, beer, wine, refreshments, refre
 
 Each source is isolated. A logged-out or changed site reports a source failure while other sources continue, the dashboard is still regenerated, and the Telegram output is still attempted. Set `SOURCE_FAILURE_MODE=fail` to make the run fail after both outputs are produced.
 
+The default hosted schedule omits Eventbrite because its public search currently rejects GitHub-hosted HTTP requests. The adapter remains available for future use or custom `EVENTBRITE_SEARCH_URLS` overrides.
+
 > Automated access can be limited by each platform's terms and UI changes. Use only accounts and content you are authorized to access. This project does not bypass CAPTCHAs, checkpoints, access controls, or rate limits.
 
 ## Local setup

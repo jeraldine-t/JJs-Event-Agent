@@ -21,7 +21,7 @@ jobs:
     timeout-minutes: 45
     env:
       TIMEZONE: Asia/Singapore
-      ENABLED_SOURCES: linkedin,luma,eventbrite,meetup,telegram
+      ENABLED_SOURCES: linkedin,luma,meetup,telegram
       PLAYWRIGHT_HEADLESS: "true"
       SOURCE_FAILURE_MODE: warn
       REQUIRE_TELEGRAM_OUTPUT: "false"
