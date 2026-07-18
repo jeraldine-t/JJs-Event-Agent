@@ -2,7 +2,7 @@
 
 JJs Event Agent discovers relevant upcoming Singapore events, applies topic and timing rules, and creates a responsive calendar dashboard plus a weekly email summary.
 
-This repository is private and GitHub Pages is disabled. The dashboard is committed as `index.html` and uploaded by each workflow run as the private `private-event-dashboard` artifact. Only accounts with access to this repository can read the code, workflow runs, or artifacts.
+The dashboard is public at `https://jeraldine-t.github.io/JJs-Event-Agent/`. The repository contains code, tests, and the sanitized `index.html` only. Login cookies, `.env`, browser profiles, private links, and raw private-message bodies must never be committed or uploaded.
 
 ## What qualifies
 
@@ -46,22 +46,17 @@ A **Hot pick** badge appears for at least 50 people going, ten or fewer seats le
 
 Private-source message bodies are not copied into the dashboard or email. LinkedIn and WhatsApp entries use safe metadata-based summaries.
 
-## Private dashboard access
+## Public dashboard access
 
-GitHub Pages sites are publicly reachable even when their source repository is private, so the previous `https://jeraldine-t.github.io/JJs-Event-Agent/` site is disabled.
+The live dashboard is:
 
-Bookmark the owner-only workflow page instead:
+`https://jeraldine-t.github.io/JJs-Event-Agent/`
+
+The Pages deployment contains only the generated `index.html` and `.nojekyll`. It does not contain `.env`, browser state, Playwright cookies, source code, raw messages, or SMTP credentials.
+
+For deployment history, use:
 
 `https://github.com/jeraldine-t/JJs-Event-Agent/actions/workflows/scraper.yml`
-
-To open the latest dashboard:
-
-1. Sign in to the `jeraldine-t` GitHub account.
-2. Open the newest successful workflow run.
-3. Download **private-event-dashboard** under **Artifacts**.
-4. Unzip it and open `index.html` in a browser.
-
-Artifacts are retained for 30 days. The same sanitized `index.html` is also committed to the private repository after a successful refresh.
 
 ## Weekly email summary
 
@@ -80,7 +75,7 @@ In **Settings → Secrets and variables → Actions → New repository secret**,
 | `SMTP_PASSWORD` | App-specific password/token, never the normal account password |
 | `SMTP_FROM` | Verified sender email address |
 
-GitHub encrypts Actions secrets and masks them from normal logs. The workflow never writes these values to `index.html`, artifacts, commits, or source-status messages. Keep LinkedIn, Eventbrite, Lu.ma, and WhatsApp login sessions local unless you later choose a locked-down self-hosted runner.
+GitHub encrypts Actions secrets and masks them from normal logs. The workflow never writes these values to `index.html`, Pages artifacts, commits, or source-status messages. Keep LinkedIn, Eventbrite, Lu.ma, and WhatsApp login sessions local unless you later choose a locked-down self-hosted runner.
 
 ## Local setup
 
@@ -159,9 +154,9 @@ The exact configured chats are:
 4. preserves the previous populated dashboard after an empty scrape;
 5. commits and pushes a changed dashboard;
 6. sends the scheduled email when SMTP secrets are configured; and
-7. uploads `index.html` as the owner-only `private-event-dashboard` artifact.
+7. uploads only `index.html` plus `.nojekyll` and deploys the public GitHub Pages site.
 
-The workflow requests only `contents: write`; it has no Pages or identity-token permission. If repository policy restricts `GITHUB_TOKEN`, allow Actions read/write access under **Settings → Actions → General → Workflow permissions** so the dashboard commit can succeed.
+The workflow requests `contents: write`, `pages: write`, and `id-token: write`. If repository policy restricts `GITHUB_TOKEN`, allow Actions read/write access under **Settings → Actions → General → Workflow permissions** so the dashboard commit and Pages deployment can succeed.
 
 ## Environment reference
 
@@ -180,5 +175,5 @@ Every supported variable is listed in `.env.example`. Common tuning values inclu
 - **Eventbrite challenge:** refresh the local session; access challenges are not bypassed.
 - **Lu.ma private event missing:** add its exact link locally and refresh the local cookies.
 - **Email skipped:** add all six SMTP secrets and wait for the next scheduled run; manual runs intentionally do not send.
-- **Dashboard bookmark returns 404:** sign in as `jeraldine-t`; private repository pages are invisible to other accounts.
+- **Dashboard returns 404:** confirm the latest Pages deployment succeeded and GitHub Actions is selected as the Pages source.
 - **Site selector changed:** update the isolated adapter under `src/event_agent/sources/` and its tests.

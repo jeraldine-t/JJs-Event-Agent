@@ -1,4 +1,4 @@
-name: Weekly event scrape and private dashboard
+name: Weekly event scrape and Pages deploy
 
 on:
   schedule:
@@ -7,17 +7,19 @@ on:
   workflow_dispatch:
     inputs:
       refresh_data:
-        description: Scrape sources before uploading; disable to use the committed dashboard
+        description: Scrape sources before deploying; disable to deploy the committed dashboard
         required: true
         default: true
         type: boolean
 
 concurrency:
-  group: jjs-event-agent-private-dashboard
+  group: jjs-event-agent-pages
   cancel-in-progress: false
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
   scrape:
@@ -90,19 +92,27 @@ jobs:
           git pull --rebase origin "${GITHUB_REF_NAME}"
           git push origin "HEAD:${GITHUB_REF_NAME}"
 
-      - name: Upload owner-only dashboard artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: private-event-dashboard
-          path: index.html
-          if-no-files-found: error
-          retention-days: 30
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v6
 
-      - name: Add private dashboard instructions
+      - name: Prepare public site artifact
         run: |
-          {
-            echo "## Private event dashboard"
-            echo "Download **private-event-dashboard** from the Artifacts section of this run, unzip it, and open index.html."
-            echo ""
-            echo "This artifact requires read access to this private repository."
-          } >> "${GITHUB_STEP_SUMMARY}"
+          mkdir -p "${RUNNER_TEMP}/jjs-event-site"
+          cp index.html "${RUNNER_TEMP}/jjs-event-site/index.html"
+          touch "${RUNNER_TEMP}/jjs-event-site/.nojekyll"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ${{ runner.temp }}/jjs-event-site
+
+  deploy:
+    needs: scrape
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy dashboard to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
