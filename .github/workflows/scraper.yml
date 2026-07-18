@@ -27,7 +27,7 @@ jobs:
     timeout-minutes: 45
     env:
       TIMEZONE: Asia/Singapore
-      ENABLED_SOURCES: linkedin,eventbrite,luma,meetup
+      ENABLED_SOURCES: linkedin,eventbrite,luma,meetup,gdg
       PLAYWRIGHT_HEADLESS: "true"
       SOURCE_FAILURE_MODE: warn
       LINKEDIN_LI_AT: ${{ secrets.LINKEDIN_LI_AT }}
@@ -68,8 +68,8 @@ jobs:
       - name: Preserve last populated dashboard after an empty scrape
         if: ${{ github.event_name == 'schedule' || inputs.refresh_data }}
         run: |
-          previous_count=$(grep -c '<article class="card' "${RUNNER_TEMP}/index.previous.html" || true)
-          current_count=$(grep -c '<article class="card' index.html || true)
+          previous_count=$(grep -c '<article class="event-card' "${RUNNER_TEMP}/index.previous.html" || true)
+          current_count=$(grep -c '<article class="event-card' index.html || true)
           if [[ "${previous_count}" -gt 0 && "${current_count}" -eq 0 ]]; then
             echo "No events qualified; preserving the last populated dashboard"
             cp "${RUNNER_TEMP}/index.previous.html" index.html

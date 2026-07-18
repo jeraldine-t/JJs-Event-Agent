@@ -46,6 +46,7 @@ class Settings:
     linkedin_posts_per_profile: int
     eventbrite_cookies_json: str
     eventbrite_max_events: int
+    gdg_max_events: int
     luma_cookies_json: str
     luma_private_urls: tuple[str, ...]
     luma_max_events: int
@@ -74,7 +75,7 @@ class Settings:
             playwright_headless=_bool(os.getenv("PLAYWRIGHT_HEADLESS"), True),
             enabled_sources=_csv(
                 os.getenv("ENABLED_SOURCES"),
-                ("linkedin", "eventbrite", "luma", "meetup"),
+                ("linkedin", "eventbrite", "luma", "meetup", "gdg"),
             ),
             output_html=output if output.is_absolute() else root / output,
             source_failure_mode=os.getenv("SOURCE_FAILURE_MODE", "warn").casefold(),
@@ -85,6 +86,7 @@ class Settings:
             linkedin_posts_per_profile=int(os.getenv("LINKEDIN_POSTS_PER_PROFILE", "12")),
             eventbrite_cookies_json=os.getenv("EVENTBRITE_COOKIES_JSON", "").strip(),
             eventbrite_max_events=int(os.getenv("EVENTBRITE_MAX_EVENTS", "80")),
+            gdg_max_events=int(os.getenv("GDG_MAX_EVENTS", "60")),
             luma_cookies_json=os.getenv("LUMA_COOKIES_JSON", "").strip(),
             luma_private_urls=_csv(os.getenv("LUMA_PRIVATE_URLS")),
             luma_max_events=int(os.getenv("LUMA_MAX_EVENTS", "80")),

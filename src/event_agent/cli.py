@@ -13,7 +13,7 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Discover and publish curated Singapore events")
     parser.add_argument(
         "--sources",
-        help="Comma-separated source override (linkedin,eventbrite,luma,meetup,whatsapp)",
+        help="Comma-separated source override (linkedin,eventbrite,luma,meetup,gdg,whatsapp)",
     )
     parser.add_argument("--root", type=Path, default=Path.cwd(), help="Repository root")
     parser.add_argument("--log-level", default="INFO")

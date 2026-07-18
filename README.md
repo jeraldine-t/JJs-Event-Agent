@@ -1,8 +1,8 @@
 # JJs Event Agent
 
-JJs Event Agent discovers upcoming **free ($0)** events in Singapore, applies strict timing and topic rules, and publishes the curated result to a responsive, self-contained `index.html` dashboard deployed with GitHub Pages.
+JJs Event Agent discovers upcoming **free ($0)** events in Singapore, applies strict timing and topic rules, and publishes the curated result to a responsive, self-contained calendar dashboard deployed with GitHub Pages.
 
-The repository is public so GitHub Pages works on the current account plan. No live credentials, browser profiles, cookies, or private message bodies belong in Git. The Pages artifact contains only the curated fields shown on each card—not private source text.
+The repository is public so GitHub Pages works on the current account plan. No live credentials, browser profiles, cookies, or private message bodies belong in Git. The Pages artifact contains only the curated fields shown on each card. Summaries from private-message sources are generated from safe event metadata rather than copied from private posts.
 
 ## What qualifies
 
@@ -24,9 +24,18 @@ Events mentioning free food, free drinks, pizza, beer, wine, refreshments, refre
 | Lu.ma | Playwright | Optional cookie JSON | Reads the Singapore listing, signed-in home view, and explicitly supplied private/unlisted URLs. |
 | Eventbrite | Playwright | Cookie JSON | Uses an authenticated browser session for Singapore free-event search and event details. |
 | Meetup | Requests + BeautifulSoup | None | Uses the Singapore event search and schema.org/card data. |
+| Google Developer Groups | Playwright + schema.org | None | Reads the public events list and GDG Singapore chapter, then verifies detail pages. |
 | WhatsApp | Playwright persistent context | Saved browser profile | Reads only the two exact configured groups and never sends messages. |
 
 Each source is isolated. A logged-out or changed site reports a source failure while other sources continue and the dashboard is still regenerated. Set `SOURCE_FAILURE_MODE=fail` to make the run fail after the dashboard is produced.
+
+GDG is intentionally conservative: a label such as “external registration” is not treated as free. The source must explicitly say “free registration,” “free admission,” or provide another real $0 signal before the event can pass the price filter.
+
+## Dashboard views and summaries
+
+Events are grouped chronologically by month and day, with weekday evenings and weekend daytime events shown in the same calendar-style agenda. The summary tiles break down explicit F&B, weekday, weekend, and networking counts. Search can be combined with source and F&B filters.
+
+Every event card includes a summary of at most 99 words. Public event-page descriptions may be condensed into that summary. LinkedIn and WhatsApp message bodies are never copied into the public page; their cards receive a short metadata-based summary instead. “F&B not stated” means only that the source did not explicitly mention food or drinks—it does not claim that none will be served.
 
 > Automated access can be limited by each platform's terms and UI changes. Use only accounts and content you are authorized to access. This project does not bypass CAPTCHAs, checkpoints, access controls, or rate limits.
 
@@ -168,7 +177,7 @@ The live project URL is `https://jeraldine-t.github.io/JJs-Event-Agent/` and is 
 Every supported variable is documented in `.env.example`. Useful tuning values include:
 
 - `LOOKAHEAD_DAYS` and `MESSAGE_LOOKBACK_DAYS`;
-- LinkedIn profile/post caps and Eventbrite/Lu.ma event caps;
+- LinkedIn profile/post caps and Eventbrite/Lu.ma/GDG event caps;
 - `EVENTBRITE_SEARCH_URLS` and `MEETUP_SEARCH_URLS` as pipe-separated overrides;
 - `SOURCE_FAILURE_MODE=warn|fail`.
 

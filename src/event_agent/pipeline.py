@@ -9,6 +9,7 @@ from event_agent.models import RawEvent, SourceStatus
 from event_agent.outputs.dashboard import render_dashboard
 from event_agent.sources.base import EventSource, SourceNotConfigured
 from event_agent.sources.eventbrite import EventbriteSource
+from event_agent.sources.gdg import GDGSource
 from event_agent.sources.linkedin import LinkedInSource
 from event_agent.sources.luma import LumaSource
 from event_agent.sources.public_web import MeetupSource
@@ -22,6 +23,7 @@ def _sources() -> dict[str, EventSource]:
         "linkedin": LinkedInSource(),
         "luma": LumaSource(),
         "eventbrite": EventbriteSource(),
+        "gdg": GDGSource(),
         "meetup": MeetupSource(),
         "whatsapp": WhatsAppSource(),
     }
