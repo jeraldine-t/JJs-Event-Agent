@@ -172,6 +172,8 @@ The workflow explicitly requests `contents: write`, `pages: write`, and `id-toke
 
 Secrets are passed to the process as environment variables at runtime. GitHub masks exact secret values in logs, but you should still avoid debug logging and rotate any credential that is accidentally exposed.
 
+The scheduled workflow keeps `REQUIRE_TELEGRAM_OUTPUT=false` so the dashboard can deploy before BotFather setup is complete. As soon as `TELEGRAM_BOT_TOKEN` and `MY_TELEGRAM_CHAT_ID` are present, the same run also sends the Telegram notification.
+
 ## Schedule, dashboard commit, and GitHub Pages
 
 `.github/workflows/scraper.yml` runs at **8:00 AM every Sunday in `Asia/Singapore`**, and also supports manual runs from the Actions tab. It:
