@@ -24,14 +24,11 @@ jobs:
       ENABLED_SOURCES: linkedin,eventbrite,luma,meetup
       PLAYWRIGHT_HEADLESS: "true"
       SOURCE_FAILURE_MODE: warn
-      REQUIRE_TELEGRAM_OUTPUT: "false"
       LINKEDIN_LI_AT: ${{ secrets.LINKEDIN_LI_AT }}
       LINKEDIN_COOKIES_JSON: ${{ secrets.LINKEDIN_COOKIES_JSON }}
       EVENTBRITE_COOKIES_JSON: ${{ secrets.EVENTBRITE_COOKIES_JSON }}
       LUMA_COOKIES_JSON: ${{ secrets.LUMA_COOKIES_JSON }}
       LUMA_PRIVATE_URLS: ${{ secrets.LUMA_PRIVATE_URLS }}
-      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-      MY_TELEGRAM_CHAT_ID: ${{ secrets.MY_TELEGRAM_CHAT_ID }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -53,7 +50,7 @@ jobs:
           ruff check .
           pytest
 
-      - name: Collect events and publish both outputs
+      - name: Collect events and refresh dashboard
         run: python -m event_agent
 
       - name: Commit refreshed dashboard

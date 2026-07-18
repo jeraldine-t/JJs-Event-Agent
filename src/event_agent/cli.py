@@ -13,12 +13,7 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Discover and publish curated Singapore events")
     parser.add_argument(
         "--sources",
-        help="Comma-separated source override (linkedin,luma,eventbrite,meetup,whatsapp,telegram)",
-    )
-    parser.add_argument(
-        "--skip-telegram",
-        action="store_true",
-        help="Generate the dashboard without sending the Telegram Bot output",
+        help="Comma-separated source override (linkedin,eventbrite,luma,meetup,whatsapp)",
     )
     parser.add_argument("--root", type=Path, default=Path.cwd(), help="Repository root")
     parser.add_argument("--log-level", default="INFO")
@@ -35,18 +30,14 @@ def main() -> None:
     if args.sources is not None:
         requested = tuple(item.strip() for item in args.sources.split(",") if item.strip())
         settings = replace(settings, enabled_sources=requested)
-    count, statuses, notification = run_pipeline(
-        settings, send_telegram=not args.skip_telegram
-    )
+    count, statuses = run_pipeline(settings)
     summary = ", ".join(f"{status.source}={status.state}" for status in statuses) or "none"
     logging.getLogger(__name__).info(
-        "Complete: %d curated events; sources: %s; Telegram: %s",
+        "Complete: %d curated events; sources: %s",
         count,
         summary,
-        notification.state,
     )
 
 
 if __name__ == "__main__":
     main()
-

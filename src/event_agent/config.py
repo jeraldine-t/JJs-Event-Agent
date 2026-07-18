@@ -39,7 +39,6 @@ class Settings:
     enabled_sources: tuple[str, ...]
     output_html: Path
     source_failure_mode: str
-    require_telegram_output: bool
     http_timeout_seconds: int
     linkedin_li_at: str
     linkedin_cookies_json: str
@@ -53,8 +52,6 @@ class Settings:
     whatsapp_user_data_dir: Path
     whatsapp_groups: tuple[str, ...]
     whatsapp_messages_per_group: int
-    telegram_bot_token: str
-    telegram_chat_id: str
     eventbrite_search_urls: tuple[str, ...]
     meetup_search_urls: tuple[str, ...]
 
@@ -81,7 +78,6 @@ class Settings:
             ),
             output_html=output if output.is_absolute() else root / output,
             source_failure_mode=os.getenv("SOURCE_FAILURE_MODE", "warn").casefold(),
-            require_telegram_output=_bool(os.getenv("REQUIRE_TELEGRAM_OUTPUT"), False),
             http_timeout_seconds=int(os.getenv("HTTP_TIMEOUT_SECONDS", "30")),
             linkedin_li_at=os.getenv("LINKEDIN_LI_AT", "").strip(),
             linkedin_cookies_json=os.getenv("LINKEDIN_COOKIES_JSON", "").strip(),
@@ -97,8 +93,6 @@ class Settings:
             ),
             whatsapp_groups=_pipes(os.getenv("WHATSAPP_GROUPS"), DEFAULT_WHATSAPP_GROUPS),
             whatsapp_messages_per_group=int(os.getenv("WHATSAPP_MESSAGES_PER_GROUP", "100")),
-            telegram_bot_token=os.getenv("TELEGRAM_BOT_TOKEN", "").strip(),
-            telegram_chat_id=os.getenv("MY_TELEGRAM_CHAT_ID", "").strip(),
             eventbrite_search_urls=_pipes(os.getenv("EVENTBRITE_SEARCH_URLS")),
             meetup_search_urls=_pipes(os.getenv("MEETUP_SEARCH_URLS")),
         )

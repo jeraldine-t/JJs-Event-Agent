@@ -1,9 +1,6 @@
 # JJs Event Agent
 
-JJs Event Agent discovers upcoming **free ($0)** events in Singapore, applies strict timing and topic rules, and publishes the same curated result to two destinations on every configured run:
-
-1. a Telegram Bot message to your personal chat; and
-2. a responsive, self-contained `index.html` dashboard deployed with GitHub Pages.
+JJs Event Agent discovers upcoming **free ($0)** events in Singapore, applies strict timing and topic rules, and publishes the curated result to a responsive, self-contained `index.html` dashboard deployed with GitHub Pages.
 
 The repository is public so GitHub Pages works on the current account plan. No live credentials, browser profiles, cookies, or private message bodies belong in Git. The Pages artifact contains only the curated fields shown on each card—not private source text.
 
@@ -29,9 +26,7 @@ Events mentioning free food, free drinks, pizza, beer, wine, refreshments, refre
 | Meetup | Requests + BeautifulSoup | None | Uses the Singapore event search and schema.org/card data. |
 | WhatsApp | Playwright persistent context | Saved browser profile | Reads only the two exact configured groups and never sends messages. |
 
-Each source is isolated. A logged-out or changed site reports a source failure while other sources continue, the dashboard is still regenerated, and the Telegram output is still attempted. Set `SOURCE_FAILURE_MODE=fail` to make the run fail after both outputs are produced.
-
-Telegram channels are not ingested. Telegram remains only as the optional Bot notification destination.
+Each source is isolated. A logged-out or changed site reports a source failure while other sources continue and the dashboard is still regenerated. Set `SOURCE_FAILURE_MODE=fail` to make the run fail after the dashboard is produced.
 
 > Automated access can be limited by each platform's terms and UI changes. Use only accounts and content you are authorized to access. This project does not bypass CAPTCHAs, checkpoints, access controls, or rate limits.
 
@@ -55,10 +50,10 @@ Fill `.env`, then run:
 python -m event_agent
 ```
 
-For a credential-free smoke run that only overwrites the local dashboard:
+For a credential-free smoke run that overwrites the local dashboard:
 
 ```bash
-python -m event_agent --sources "" --skip-telegram
+python -m event_agent --sources ""
 ```
 
 Quality checks:
@@ -132,23 +127,6 @@ The two monitored chats are exact-name matches:
 - `Codex Community - Main Chat`
 - `non-RWA events, programs, initiatives`
 
-## Telegram Bot output with BotFather
-
-1. In Telegram, open the verified [@BotFather](https://t.me/BotFather) chat.
-2. Send `/newbot`, choose a display name and a username ending in `bot`.
-3. Copy the token into `TELEGRAM_BOT_TOKEN`. Never commit or paste it into an issue.
-4. Open your new bot and press **Start** (or send `/start`). Bots cannot initiate a personal conversation until you do this.
-5. With the token loaded only in your shell, get your chat ID:
-
-   ```bash
-   export TELEGRAM_BOT_TOKEN='paste-token-here'
-   python -c 'import os,requests; print(requests.get(f"https://api.telegram.org/bot{os.environ[\"TELEGRAM_BOT_TOKEN\"]}/getUpdates", timeout=30).json())'
-   ```
-
-6. Find `message.chat.id` in the response and set it as `MY_TELEGRAM_CHAT_ID`.
-
-The bot sends HTML-formatted messages in chunks below Telegram's size limit. Event names and locations are escaped before sending.
-
 ## GitHub Actions Secrets and variables
 
 In the repository, go to **Settings → Secrets and variables → Actions**. Create these repository secrets:
@@ -159,8 +137,6 @@ In the repository, go to **Settings → Secrets and variables → Actions**. Cre
 | `EVENTBRITE_COOKIES_JSON` | Authenticated Eventbrite browser session |
 | `LUMA_COOKIES_JSON` | Account-visible Lu.ma events |
 | `LUMA_PRIVATE_URLS` | Known private/unlisted Lu.ma links |
-| `TELEGRAM_BOT_TOKEN` | Telegram output |
-| `MY_TELEGRAM_CHAT_ID` | Telegram output |
 
 Optional repository variables:
 
@@ -173,8 +149,6 @@ The workflow explicitly requests `contents: write`, `pages: write`, and `id-toke
 
 Secrets are passed to the process as environment variables at runtime. GitHub masks exact secret values in logs, but you should still avoid debug logging and rotate any credential that is accidentally exposed.
 
-The scheduled workflow keeps `REQUIRE_TELEGRAM_OUTPUT=false` so the dashboard can deploy before BotFather setup is complete. As soon as `TELEGRAM_BOT_TOKEN` and `MY_TELEGRAM_CHAT_ID` are present, the same run also sends the Telegram notification.
-
 ## Schedule, dashboard commit, and GitHub Pages
 
 `.github/workflows/scraper.yml` runs at **8:00 AM every Sunday in `Asia/Singapore`**, and also supports manual runs from the Actions tab. It:
@@ -182,7 +156,7 @@ The scheduled workflow keeps `REQUIRE_TELEGRAM_OUTPUT=false` so the dashboard ca
 1. installs and tests the package;
 2. installs Playwright Chromium;
 3. runs all configured source adapters;
-4. overwrites `index.html` and sends the Telegram notification;
+4. overwrites `index.html`;
 5. commits and pushes `index.html` if it changed; and
 6. uploads only `index.html` plus `.nojekyll` as the public Pages artifact.
 
@@ -201,8 +175,7 @@ Every supported variable is documented in `.env.example`. Useful tuning values i
 - `LOOKAHEAD_DAYS` and `MESSAGE_LOOKBACK_DAYS`;
 - LinkedIn profile/post caps and Eventbrite/Lu.ma event caps;
 - `EVENTBRITE_SEARCH_URLS` and `MEETUP_SEARCH_URLS` as pipe-separated overrides;
-- `SOURCE_FAILURE_MODE=warn|fail`;
-- `REQUIRE_TELEGRAM_OUTPUT=true|false`.
+- `SOURCE_FAILURE_MODE=warn|fail`.
 
 ## Troubleshooting
 

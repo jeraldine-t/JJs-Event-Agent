@@ -7,7 +7,6 @@ from event_agent.config import Settings
 from event_agent.filters import curate_events
 from event_agent.models import RawEvent, SourceStatus
 from event_agent.outputs.dashboard import render_dashboard
-from event_agent.outputs.telegram_bot import NotificationResult, send_notifications
 from event_agent.sources.base import EventSource, SourceNotConfigured
 from event_agent.sources.eventbrite import EventbriteSource
 from event_agent.sources.linkedin import LinkedInSource
@@ -28,9 +27,7 @@ def _sources() -> dict[str, EventSource]:
     }
 
 
-def run_pipeline(
-    settings: Settings, *, send_telegram: bool = True
-) -> tuple[int, list[SourceStatus], NotificationResult]:
+def run_pipeline(settings: Settings) -> tuple[int, list[SourceStatus]]:
     now = datetime.now(settings.timezone)
     raw_events: list[RawEvent] = []
     statuses: list[SourceStatus] = []
@@ -69,13 +66,8 @@ def run_pipeline(
     )
     LOGGER.info("Dashboard written to %s with %d events", settings.output_html, len(events))
 
-    notification = (
-        send_notifications(events, settings)
-        if send_telegram
-        else NotificationResult("skipped", 0, "disabled by command line")
-    )
     failures = [status for status in statuses if status.state == "failed"]
     if failures and settings.source_failure_mode == "fail":
         names = ", ".join(status.source for status in failures)
         raise RuntimeError(f"Sources failed after outputs were generated: {names}")
-    return len(events), statuses, notification
+    return len(events), statuses
