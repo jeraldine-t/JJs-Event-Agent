@@ -10,17 +10,15 @@ from jinja2 import Environment, PackageLoader
 
 from event_agent.models import Event, FilterReport, SourceStatus
 
-FNB_PERKS = frozenset(
-    {
-        "Free food",
-        "Free drinks",
-        "Pizza",
-        "Beer",
-        "Wine",
-        "Refreshments",
-        "Buffet",
-        "Light bites",
-    }
+FNB_PERKS = (
+    "Free food",
+    "Free drinks",
+    "Pizza",
+    "Beer",
+    "Wine",
+    "Refreshments",
+    "Buffet",
+    "Light bites",
 )
 PRIVATE_TEXT_SOURCES = frozenset({"linkedin", "whatsapp"})
 SUMMARY_WORD_LIMIT = 99
@@ -59,6 +57,27 @@ def _event_summary(event: Event) -> str:
     return fallback
 
 
+def _popularity(event: Event) -> dict[str, object]:
+    details: list[str] = []
+    if event.attendee_count is not None:
+        details.append(f"{event.attendee_count:,} going")
+    if event.seats_left is not None:
+        if event.seats_left == 0:
+            details.append("Waitlist / full")
+        else:
+            details.append(f"{event.seats_left:,} seats left")
+    elif event.registration_status == "closed":
+        details.append("Registration closed")
+    elif event.capacity is not None and event.attendee_count is None:
+        details.append(f"Capacity {event.capacity:,}")
+    hot_pick = bool(
+        (event.attendee_count is not None and event.attendee_count >= 50)
+        or (event.seats_left is not None and event.seats_left <= 10)
+        or event.registration_status == "waitlist"
+    )
+    return {"popularity_label": " · ".join(details), "hot_pick": hot_pick}
+
+
 def _event_row(event: Event) -> dict:
     row = event.to_dict()
     fnb_perks = [perk for perk in event.perks if perk in FNB_PERKS]
@@ -74,13 +93,12 @@ def _event_row(event: Event) -> dict:
             "fnb_perks": fnb_perks,
             "has_fnb": bool(fnb_perks),
             "fnb_label": ", ".join(fnb_perks) if fnb_perks else "Not stated",
-            "free_confirmed": bool(event.free_evidence),
-            "admission_label": "$0 confirmed" if event.free_evidence else "Price not stated",
             "keywords": [
                 keyword for keyword in event.keywords if keyword not in event.perks
             ],
         }
     )
+    row.update(_popularity(event))
     return row
 
 
@@ -132,7 +150,7 @@ def render_dashboard(
         lstrip_blocks=True,
     )
     template = environment.get_template("index.html.j2")
-    fnb_count = sum(bool(FNB_PERKS.intersection(event.perks)) for event in events)
+    fnb_count = sum(any(perk in FNB_PERKS for perk in event.perks) for event in events)
     rendered = template.render(
         events=[_event_row(event) for event in events],
         calendar_months=_calendar_months(events),
@@ -140,10 +158,9 @@ def render_dashboard(
         report=report,
         generated_at=generated_at.strftime("%d %b %Y, %-I:%M %p SGT"),
         source_names=sorted({event.source for event in events}),
+        fnb_types=FNB_PERKS,
         breakdowns={
             "fnb": fnb_count,
-            "free_confirmed": sum(bool(event.free_evidence) for event in events),
-            "price_unconfirmed": sum(not event.free_evidence for event in events),
             "weekday": sum(event.start_at.weekday() < 5 for event in events),
             "weekend": sum(event.start_at.weekday() >= 5 for event in events),
             "networking": sum("Networking" in event.perks for event in events),

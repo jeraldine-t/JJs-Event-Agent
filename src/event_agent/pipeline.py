@@ -7,6 +7,7 @@ from event_agent.config import Settings
 from event_agent.filters import curate_events
 from event_agent.models import RawEvent, SourceStatus
 from event_agent.outputs.dashboard import render_dashboard
+from event_agent.outputs.email import send_email_summary
 from event_agent.sources.base import EventSource, SourceNotConfigured
 from event_agent.sources.eventbrite import EventbriteSource
 from event_agent.sources.gdg import GDGSource
@@ -67,6 +68,7 @@ def run_pipeline(settings: Settings) -> tuple[int, list[SourceStatus]]:
         output_path=settings.output_html,
     )
     LOGGER.info("Dashboard written to %s with %d events", settings.output_html, len(events))
+    send_email_summary(events, settings, now)
 
     failures = [status for status in statuses if status.state == "failed"]
     if failures and settings.source_failure_mode == "fail":

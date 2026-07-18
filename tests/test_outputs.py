@@ -44,6 +44,8 @@ def test_dashboard_is_self_contained_and_protects_private_source_text(tmp_path) 
     assert html.count(">Networking<") == 1
     assert "Food &amp; beverage" in html
     assert "Pizza" in html
+    assert '<option value="pizza">Pizza</option>' in html
+    assert 'data-fnb-types="pizza"' in html
     assert "July 2026" in html
     assert "Monday" in html
     assert "<style>" in html and "<script>" in html
@@ -62,9 +64,17 @@ def test_public_summary_is_strictly_less_than_100_words(tmp_path) -> None:
 def test_dashboard_marks_fnb_as_not_stated(tmp_path) -> None:
     without_fnb = event(source="Eventbrite", description="A concise public summary.")
     without_fnb.perks = ("Networking",)
-    without_fnb.free_evidence = ""
     html = render(tmp_path, [without_fnb])
-    assert 'data-fnb="no"' in html
-    assert 'data-price="unconfirmed"' in html
+    assert 'data-fnb-types="not-stated"' in html
     assert "Not stated" in html
-    assert "Price not stated" in html
+
+
+def test_dashboard_shows_signup_interest_and_hot_pick(tmp_path) -> None:
+    popular = event(source="Lu.ma", description="A public AI builders event.")
+    popular.attendee_count = 200
+    popular.seats_left = 0
+    popular.registration_status = "waitlist"
+    html = render(tmp_path, [popular])
+    assert "Hot pick" in html
+    assert "200 going" in html
+    assert "Waitlist / full" in html

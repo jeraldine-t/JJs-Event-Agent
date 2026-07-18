@@ -7,7 +7,11 @@ from urllib.parse import quote_plus, urlsplit
 from playwright.sync_api import Page, sync_playwright
 
 from event_agent.config import Settings
-from event_agent.extraction import extract_events_from_cards, extract_json_ld_events
+from event_agent.extraction import (
+    extract_attendance_metrics,
+    extract_events_from_cards,
+    extract_json_ld_events,
+)
 from event_agent.models import RawEvent
 from event_agent.sources.browser_utils import parse_cookie_json
 
@@ -84,14 +88,18 @@ class EventbriteSource:
             for url in detail_urls:
                 try:
                     page.goto(url, wait_until="domcontentloaded", timeout=45_000)
-                    events.extend(
-                        extract_json_ld_events(
-                            page.content(),
-                            source=self.name,
-                            page_url=page.url,
-                            timezone=settings.timezone,
-                        )
+                    structured = extract_json_ld_events(
+                        page.content(),
+                        source=self.name,
+                        page_url=page.url,
+                        timezone=settings.timezone,
                     )
+                    body_text = page.locator("body").inner_text(timeout=5_000)
+                    metrics = extract_attendance_metrics(body_text)
+                    for event in structured:
+                        event.metadata.update(metrics)
+                        event.raw_text = body_text[:20_000]
+                    events.extend(structured)
                 except Exception as exc:
                     LOGGER.warning("Eventbrite detail failed (%s)", type(exc).__name__)
             context.close()

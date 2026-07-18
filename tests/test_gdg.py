@@ -7,7 +7,7 @@ SGT = ZoneInfo("Asia/Singapore")
 
 def test_gdg_detail_uses_schema_and_explicit_free_registration() -> None:
     html = """
-    <html><body><p>Free registration</p>
+    <html><body><p>Free registration</p><p>82 Going · Sold Out</p>
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -32,6 +32,8 @@ def test_gdg_detail_uses_schema_and_explicit_free_registration() -> None:
     assert events[0].source == "GDG"
     assert events[0].price_text.casefold() == "free registration"
     assert events[0].location == "Developer Space, Singapore, SG"
+    assert events[0].metadata["attendee_count"] == 82
+    assert events[0].metadata["seats_left"] == 0
 
 
 def test_gdg_external_registration_is_not_assumed_free() -> None:

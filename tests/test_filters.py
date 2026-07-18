@@ -68,6 +68,24 @@ def test_unstated_price_is_included_but_not_marked_free() -> None:
     assert report.accepted == 1
 
 
+def test_signup_metrics_are_propagated_to_curated_event() -> None:
+    raw = candidate(
+        datetime(2026, 7, 13, 19, 0, tzinfo=SGT),
+        "Free AI builders meetup",
+    )
+    raw.metadata.update(
+        attendee_count=120,
+        capacity=150,
+        seats_left=30,
+        registration_status="open",
+    )
+    events, _report = curate_events([raw], keywords=("AI",), now=NOW, lookahead_days=90)
+    assert events[0].attendee_count == 120
+    assert events[0].capacity == 150
+    assert events[0].seats_left == 30
+    assert events[0].registration_status == "open"
+
+
 def test_perks_raise_priority() -> None:
     plain = candidate(
         datetime(2026, 7, 14, 19, 0, tzinfo=SGT),

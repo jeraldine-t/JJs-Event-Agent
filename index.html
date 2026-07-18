@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="A calendar of curated AI, tech, robotics, marketing, business, and networking events in Singapore with admission confidence and F&amp;B status.">
+  <meta name="description" content="A calendar of curated AI, tech, robotics, marketing, business, and networking events in Singapore with F&amp;B and signup interest signals.">
   <title>JJs Event Agent · Singapore</title>
   <style>
     :root {
@@ -45,14 +45,13 @@
     }
     .count strong { display: block; color: var(--lime); font-size: 44px; line-height: 1; }
     .count span { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .12em; }
-    .breakdowns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 28px 0 22px; }
+    .breakdowns { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 28px 0 22px; }
     .stat { padding: 16px 18px; border: 1px solid var(--line); border-radius: 18px; background: rgba(15, 32, 28, .68); }
     .stat strong { display: block; margin-bottom: 3px; font-size: 24px; color: var(--text); }
     .stat span { color: var(--muted); font-size: 12px; }
     .stat.fnb strong { color: var(--peach); }
-    .stat.price-unknown strong { color: var(--amber); }
     .toolbar {
-      display: grid; grid-template-columns: minmax(220px, 1fr) repeat(3, 180px); gap: 10px;
+      display: grid; grid-template-columns: minmax(220px, 1fr) 190px 220px; gap: 10px;
       position: sticky; top: 12px; z-index: 5; margin: 0 0 34px; padding: 10px;
       border: 1px solid var(--line); border-radius: 20px; background: rgba(8, 19, 16, .88); backdrop-filter: blur(20px);
     }
@@ -83,8 +82,7 @@
     .topline { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
     .source { color: var(--mint); font-size: 11px; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
     .pill { border-radius: 999px; padding: 4px 8px; font-size: 10px; font-weight: 850; text-transform: uppercase; letter-spacing: .04em; }
-    .free { color: #07110f; background: var(--lime); }
-    .price-unknown { color: var(--amber); border: 1px solid rgba(243, 211, 138, .3); background: rgba(243, 211, 138, .08); }
+    .hot { color: #1b1200; background: var(--amber); }
     .window { color: var(--blue); border: 1px solid rgba(159, 197, 255, .25); background: rgba(159, 197, 255, .07); }
     .event-card h3 { margin: 15px 0 9px; font-size: clamp(21px, 3vw, 29px); line-height: 1.12; letter-spacing: -.025em; }
     .summary { max-width: 760px; margin: 0; color: #c5d7d0; }
@@ -98,6 +96,9 @@
     .fnb-status span { display: block; margin-bottom: 3px; color: var(--muted); font-size: 10px; font-weight: 850; text-transform: uppercase; letter-spacing: .1em; }
     .fnb-status strong { color: var(--peach); font-size: 13px; }
     .fnb-status.none strong { color: var(--muted); }
+    .popularity { padding: 12px; border-radius: 14px; border: 1px solid rgba(243, 211, 138, .22); background: rgba(243, 211, 138, .055); }
+    .popularity span { display: block; margin-bottom: 3px; color: var(--muted); font-size: 10px; font-weight: 850; text-transform: uppercase; letter-spacing: .1em; }
+    .popularity strong { color: var(--amber); font-size: 13px; }
     .register { margin-top: auto; display: flex; justify-content: space-between; align-items: center; gap: 12px; text-decoration: none; font-weight: 850; }
     .register span:last-child { color: var(--lime); font-size: 22px; }
     .empty, .status-panel { padding: 28px; border: 1px solid var(--line); border-radius: 22px; background: var(--surface); }
@@ -135,14 +136,12 @@
       <div>
         <div class="eyebrow">Singapore · Curated event intel</div>
         <h1>Your social calendar, curated.</h1>
-        <p class="intro">AI, tech, robotics, marketing, business and networking events—organized by date, with admission confidence and food or drink clearly called out.</p>
+        <p class="intro">AI, tech, robotics, marketing, business and networking events—organized by date, with food, drinks and signup interest clearly called out.</p>
       </div>
       <div class="count"><strong id="visible-count">7</strong><span>events showing</span></div>
     </header>
 
     <section class="breakdowns" aria-label="Event breakdowns">
-      <div class="stat"><strong>6</strong><span>confirmed free</span></div>
-      <div class="stat price-unknown"><strong>1</strong><span>price not stated</span></div>
       <div class="stat fnb"><strong>0</strong><span>with explicit F&amp;B</span></div>
       <div class="stat"><strong>6</strong><span>weekday evenings</span></div>
       <div class="stat"><strong>1</strong><span>weekend daytime</span></div>
@@ -155,14 +154,8 @@
         <option value="">All sources</option>
 <option value="eventbrite">Eventbrite</option><option value="gdg">GDG</option>      </select>
       <select class="select" id="fnb" aria-label="Filter by food and beverage">
-        <option value="">Any F&amp;B status</option>
-        <option value="yes">F&amp;B mentioned</option>
-        <option value="no">F&amp;B not stated</option>
-      </select>
-      <select class="select" id="price" aria-label="Filter by admission confidence">
-        <option value="">Any admission status</option>
-        <option value="confirmed">Confirmed free</option>
-        <option value="unconfirmed">Price not stated</option>
+        <option value="">All F&amp;B types</option>
+<option value="free food">Free food</option><option value="free drinks">Free drinks</option><option value="pizza">Pizza</option><option value="beer">Beer</option><option value="wine">Wine</option><option value="refreshments">Refreshments</option><option value="buffet">Buffet</option><option value="light bites">Light bites</option>        <option value="not-stated">Not stated</option>
       </select>
     </div>
 
@@ -172,9 +165,9 @@
         <section class="calendar-day" data-date="2026-07-28" aria-label="28 July 2026">
           <div class="day-rail"><strong>28</strong><span>Tuesday</span></div>
           <div class="day-events">
-            <article class="event-card" data-search="turn on your client waterfall: authority marketing for b2b business owners a free marketing, business event in singapore. it fits the curated singapore timing window; open the registration page for the organizer&#39;s agenda and latest details. singapore eventbrite $0 confirmed  marketing business" data-source="eventbrite" data-fnb="no" data-price="confirmed">
+            <article class="event-card" data-search="turn on your client waterfall: authority marketing for b2b business owners a free marketing, business event in singapore. it fits the curated singapore timing window; open the registration page for the organizer&#39;s agenda and latest details. singapore eventbrite   marketing business" data-source="eventbrite" data-fnb-types="not-stated">
               <div class="event-main">
-                <div class="topline"><span class="source">Eventbrite</span><span class="pill free">$0 confirmed</span><span class="pill window">After-work</span></div>
+                <div class="topline"><span class="source">Eventbrite</span><span class="pill window">After-work</span></div>
                 <h3>Turn On Your Client Waterfall: Authority Marketing for B2B Business Owners</h3>
                 <p class="summary">A free Marketing, Business event in Singapore. It fits the curated Singapore timing window; open the registration page for the organizer&#39;s agenda and latest details.</p>
                 <div class="tags">
@@ -197,9 +190,9 @@
         <section class="calendar-day" data-date="2026-08-04" aria-label="04 August 2026">
           <div class="day-rail"><strong>04</strong><span>Tuesday</span></div>
           <div class="day-events">
-            <article class="event-card" data-search="google builders night: building next-gen ai agents an evening for creators and builders learning to design and deploy next-generation ai agents using google technologies. 80 pasir panjang road, singapore 117372 gdg price not stated  ai tech" data-source="gdg" data-fnb="no" data-price="unconfirmed">
+            <article class="event-card" data-search="google builders night: building next-gen ai agents an evening for creators and builders learning to design and deploy next-generation ai agents using google technologies. 80 pasir panjang road, singapore 117372 gdg 200 going · waitlist / full  ai tech" data-source="gdg" data-fnb-types="not-stated">
               <div class="event-main">
-                <div class="topline"><span class="source">GDG</span><span class="pill price-unknown">Price not stated</span><span class="pill window">After-work</span></div>
+                <div class="topline"><span class="source">GDG</span><span class="pill window">After-work</span><span class="pill hot">Hot pick</span></div>
                 <h3>Google Builders Night: Building Next-Gen AI Agents</h3>
                 <p class="summary">An evening for creators and builders learning to design and deploy next-generation AI agents using Google technologies.</p>
                 <div class="tags">
@@ -211,7 +204,7 @@
                   <span><b>Where</b><br>80 Pasir Panjang Road, Singapore 117372</span>
                 </div>
                 <div class="fnb-status none"><span>Food &amp; beverage</span><strong>Not stated</strong></div>
-                <a class="register" href="https://gdg.community.dev/events/details/google-gdg-singapore-presents-google-builders-night-building-next-gen-ai-agents" target="_blank" rel="noopener noreferrer"><span>Registration &amp; details</span><span>↗</span></a>
+<div class="popularity"><span>Signup interest</span><strong>200 going · Waitlist / full</strong></div>                <a class="register" href="https://gdg.community.dev/events/details/google-gdg-singapore-presents-google-builders-night-building-next-gen-ai-agents" target="_blank" rel="noopener noreferrer"><span>Registration &amp; details</span><span>↗</span></a>
               </aside>
             </article>
           </div>
@@ -219,9 +212,9 @@
         <section class="calendar-day" data-date="2026-08-06" aria-label="06 August 2026">
           <div class="day-rail"><strong>06</strong><span>Thursday</span></div>
           <div class="day-events">
-            <article class="event-card featured" data-search="business networking singapore — sen first thursdays (free entry) a free business, networking event in singapore · rocky master. it fits the curated singapore timing window; open the registration page for the organizer&#39;s agenda and latest details. singapore · rocky master eventbrite $0 confirmed networking business" data-source="eventbrite" data-fnb="no" data-price="confirmed">
+            <article class="event-card featured" data-search="business networking singapore — sen first thursdays (free entry) a free business, networking event in singapore · rocky master. it fits the curated singapore timing window; open the registration page for the organizer&#39;s agenda and latest details. singapore · rocky master eventbrite  networking business" data-source="eventbrite" data-fnb-types="not-stated">
               <div class="event-main">
-                <div class="topline"><span class="source">Eventbrite</span><span class="pill free">$0 confirmed</span><span class="pill window">After-work</span></div>
+                <div class="topline"><span class="source">Eventbrite</span><span class="pill window">After-work</span></div>
                 <h3>Business Networking Singapore — SEN First Thursdays (Free Entry)</h3>
                 <p class="summary">A free Business, Networking event in Singapore · Rocky Master. It fits the curated Singapore timing window; open the registration page for the organizer&#39;s agenda and latest details.</p>
                 <div class="tags">
@@ -241,9 +234,9 @@
         <section class="calendar-day" data-date="2026-08-13" aria-label="13 August 2026">
           <div class="day-rail"><strong>13</strong><span>Thursday</span></div>
           <div class="day-events">
-            <article class="event-card featured" data-search="networking dinner - for biz owner, investor &amp; aspiring entrepreneur a free business, networking event in singapore · highlander bar @ millenia walk. it fits the curated singapore timing window; open the registration page for the organizer&#39;s agenda and latest details. singapore · highlander bar @ millenia walk eventbrite $0 confirmed networking business" data-source="eventbrite" data-fnb="no" data-price="confirmed">
+            <article class="event-card featured" data-search="networking dinner - for biz owner, investor &amp; aspiring entrepreneur a free business, networking event in singapore · highlander bar @ millenia walk. it fits the curated singapore timing window; open the registration page for the organizer&#39;s agenda and latest details. singapore · highlander bar @ millenia walk eventbrite  networking business" data-source="eventbrite" data-fnb-types="not-stated">
               <div class="event-main">
-                <div class="topline"><span class="source">Eventbrite</span><span class="pill free">$0 confirmed</span><span class="pill window">After-work</span></div>
+                <div class="topline"><span class="source">Eventbrite</span><span class="pill window">After-work</span></div>
                 <h3>Networking Dinner - For Biz Owner, Investor &amp; Aspiring Entrepreneur</h3>
                 <p class="summary">A free Business, Networking event in Singapore · Highlander Bar @ Millenia Walk. It fits the curated Singapore timing window; open the registration page for the organizer&#39;s agenda and latest details.</p>
                 <div class="tags">
@@ -263,9 +256,9 @@
         <section class="calendar-day" data-date="2026-08-20" aria-label="20 August 2026">
           <div class="day-rail"><strong>20</strong><span>Thursday</span></div>
           <div class="day-events">
-            <article class="event-card featured" data-search="business networking singapore — sen third thursdays (free entry) a free business, networking event in singapore · rocky master. it fits the curated singapore timing window; open the registration page for the organizer&#39;s agenda and latest details. singapore · rocky master eventbrite $0 confirmed networking business" data-source="eventbrite" data-fnb="no" data-price="confirmed">
+            <article class="event-card featured" data-search="business networking singapore — sen third thursdays (free entry) a free business, networking event in singapore · rocky master. it fits the curated singapore timing window; open the registration page for the organizer&#39;s agenda and latest details. singapore · rocky master eventbrite  networking business" data-source="eventbrite" data-fnb-types="not-stated">
               <div class="event-main">
-                <div class="topline"><span class="source">Eventbrite</span><span class="pill free">$0 confirmed</span><span class="pill window">After-work</span></div>
+                <div class="topline"><span class="source">Eventbrite</span><span class="pill window">After-work</span></div>
                 <h3>Business Networking Singapore — SEN Third Thursdays (Free Entry)</h3>
                 <p class="summary">A free Business, Networking event in Singapore · Rocky Master. It fits the curated Singapore timing window; open the registration page for the organizer&#39;s agenda and latest details.</p>
                 <div class="tags">
@@ -285,9 +278,9 @@
         <section class="calendar-day" data-date="2026-08-21" aria-label="21 August 2026">
           <div class="day-rail"><strong>21</strong><span>Friday</span></div>
           <div class="day-events">
-            <article class="event-card featured" data-search="tgif networking #43 a free networking event in singapore · armoury steaks &amp; craft beer bar · orchard central. it fits the curated singapore timing window; open the registration page for the organizer&#39;s agenda and latest details. singapore · armoury steaks &amp; craft beer bar · orchard central eventbrite $0 confirmed networking " data-source="eventbrite" data-fnb="no" data-price="confirmed">
+            <article class="event-card featured" data-search="tgif networking #43 a free networking event in singapore · armoury steaks &amp; craft beer bar · orchard central. it fits the curated singapore timing window; open the registration page for the organizer&#39;s agenda and latest details. singapore · armoury steaks &amp; craft beer bar · orchard central eventbrite  networking " data-source="eventbrite" data-fnb-types="not-stated">
               <div class="event-main">
-                <div class="topline"><span class="source">Eventbrite</span><span class="pill free">$0 confirmed</span><span class="pill window">After-work</span></div>
+                <div class="topline"><span class="source">Eventbrite</span><span class="pill window">After-work</span></div>
                 <h3>TGIF NETWORKING #43</h3>
                 <p class="summary">A free Networking event in Singapore · Armoury Steaks &amp; Craft Beer Bar · Orchard Central. It fits the curated Singapore timing window; open the registration page for the organizer&#39;s agenda and latest details.</p>
                 <div class="tags">
@@ -307,9 +300,9 @@
         <section class="calendar-day" data-date="2026-08-22" aria-label="22 August 2026">
           <div class="day-rail"><strong>22</strong><span>Saturday</span></div>
           <div class="day-events">
-            <article class="event-card" data-search="roundtable singapore: tech x startup meet (free) a free tech event in singapore. it fits the curated singapore timing window; open the registration page for the organizer&#39;s agenda and latest details. singapore eventbrite $0 confirmed  tech" data-source="eventbrite" data-fnb="no" data-price="confirmed">
+            <article class="event-card" data-search="roundtable singapore: tech x startup meet (free) a free tech event in singapore. it fits the curated singapore timing window; open the registration page for the organizer&#39;s agenda and latest details. singapore eventbrite   tech" data-source="eventbrite" data-fnb-types="not-stated">
               <div class="event-main">
-                <div class="topline"><span class="source">Eventbrite</span><span class="pill free">$0 confirmed</span><span class="pill window">Weekend daytime</span></div>
+                <div class="topline"><span class="source">Eventbrite</span><span class="pill window">Weekend daytime</span></div>
                 <h3>ROUNDTABLE Singapore: Tech x Startup Meet (Free)</h3>
                 <p class="summary">A free Tech event in Singapore. It fits the curated Singapore timing window; open the registration page for the organizer&#39;s agenda and latest details.</p>
                 <div class="tags">
@@ -329,26 +322,26 @@
       </section>
       <div class="empty" id="empty" hidden>
         <h2>No matches yet.</h2>
-        <p>Try a broader search or reset the source, admission, and F&amp;B filters.</p>
+        <p>Try a broader search or reset the source and F&amp;B filters.</p>
       </div>
     </section>
 
     <details class="status-panel">
-      <summary>Run health · generated 18 Jul 2026, 3:37 PM SGT</summary>
+      <summary>Run health · generated 18 Jul 2026, 4:15 PM SGT</summary>
       <div class="statuses">
         <div class="status"><b>LinkedIn</b><br><span class="state-ok">ok</span></div>
         <div class="status"><b>Eventbrite</b><br><span class="state-ok">ok</span> · 23 candidates</div>
         <div class="status"><b>GDG</b><br><span class="state-ok">ok</span> · 1 candidates</div>
+        <div class="status"><b>Lu.ma</b><br><span class="state-ok">ok</span> · 6 candidates</div>
       </div>
       <p><small>Accepted 7. Rejections: time-window=13, keyword=4.</small></p>
     </details>
-    <footer>Times shown in Singapore Time (SGT). “Price not stated” means no admission price was found; it does not guarantee free entry. Events with an explicit paid price are excluded. F&amp;B means the source explicitly mentions food or drinks.</footer>
+    <footer>Times shown in Singapore Time (SGT). F&amp;B and signup interest appear only when explicitly exposed by the source; missing data is left unstated.</footer>
   </main>
   <script>
     const search = document.querySelector('#search');
     const source = document.querySelector('#source');
     const fnb = document.querySelector('#fnb');
-    const price = document.querySelector('#price');
     const cards = [...document.querySelectorAll('.event-card')];
     const days = [...document.querySelectorAll('.calendar-day')];
     const months = [...document.querySelectorAll('.calendar-month')];
@@ -358,13 +351,11 @@
       const query = search.value.trim().toLowerCase();
       const selectedSource = source.value;
       const selectedFnb = fnb.value;
-      const selectedPrice = price.value;
       let visible = 0;
       cards.forEach(card => {
         const show = (!query || card.dataset.search.includes(query))
           && (!selectedSource || card.dataset.source === selectedSource)
-          && (!selectedFnb || card.dataset.fnb === selectedFnb)
-          && (!selectedPrice || card.dataset.price === selectedPrice);
+          && (!selectedFnb || card.dataset.fnbTypes.split('|').includes(selectedFnb));
         card.hidden = !show;
         if (show) visible += 1;
       });
@@ -380,7 +371,6 @@
     search.addEventListener('input', filterCards);
     source.addEventListener('change', filterCards);
     fnb.addEventListener('change', filterCards);
-    price.addEventListener('change', filterCards);
   </script>
 </body>
 </html>

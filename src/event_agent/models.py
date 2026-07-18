@@ -52,6 +52,10 @@ class Event:
     free_evidence: str
     score: int
     end_at: datetime | None = None
+    attendee_count: int | None = None
+    capacity: int | None = None
+    seats_left: int | None = None
+    registration_status: str = ""
 
     @property
     def event_id(self) -> str:

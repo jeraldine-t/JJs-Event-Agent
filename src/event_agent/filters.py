@@ -114,6 +114,14 @@ def _paid_evidence(raw: RawEvent, text: str) -> str:
     return ""
 
 
+def _metric(raw: RawEvent, key: str) -> int | None:
+    try:
+        value = int(raw.metadata.get(key))
+    except (TypeError, ValueError):
+        return None
+    return value if value >= 0 else None
+
+
 def _valid_time_window(start_at: datetime) -> bool:
     local_time = start_at.timetz().replace(tzinfo=None)
     if start_at.weekday() < 5:
@@ -128,6 +136,14 @@ def _dedupe_key(event: Event) -> tuple[str, str]:
         return ("url", url.casefold())
     normalized_title = re.sub(r"\W+", " ", event.title.casefold()).strip()
     return ("title-time", f"{normalized_title}|{event.start_at:%Y-%m-%dT%H:%M}")
+
+
+def _event_quality(event: Event) -> tuple[int, int, int]:
+    metrics = sum(
+        value is not None
+        for value in (event.attendee_count, event.capacity, event.seats_left)
+    )
+    return (event.score, metrics, len(event.description))
 
 
 def curate_events(
@@ -188,6 +204,10 @@ def curate_events(
                 perks=perks,
                 free_evidence=free_evidence,
                 score=score,
+                attendee_count=_metric(raw, "attendee_count"),
+                capacity=_metric(raw, "capacity"),
+                seats_left=_metric(raw, "seats_left"),
+                registration_status=str(raw.metadata.get("registration_status", "")),
             )
         )
 
@@ -195,7 +215,7 @@ def curate_events(
     for event in accepted:
         key = _dedupe_key(event)
         existing = unique.get(key)
-        if existing is None or event.score > existing.score:
+        if existing is None or _event_quality(event) > _event_quality(existing):
             unique[key] = event
         else:
             report.reject("duplicate")

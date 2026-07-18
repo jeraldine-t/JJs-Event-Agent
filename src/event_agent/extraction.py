@@ -32,6 +32,33 @@ DATE_TIME_LINE_RE = re.compile(
     r"Dec(?:ember)?)\b.*\b\d{1,2}(?::\d{2})?\s*(?:AM|PM)\b",
     re.IGNORECASE,
 )
+ATTENDEE_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(
+        r"\b(\d{1,3}(?:,\d{3})*)\s+(?:going|attending|attendees?|rsvp(?:'d|s)?)\b",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"\b(?:going|attending|attendees?|rsvp(?:'d|s)?)[\s:]+"
+        r"(\d{1,3}(?:,\d{3})*)\b",
+        re.IGNORECASE,
+    ),
+)
+SEATS_LEFT_RE = re.compile(
+    r"\b(\d{1,4})\s+(?:seats?|spots?|tickets?)\s+(?:left|remaining|available)\b",
+    re.IGNORECASE,
+)
+CAPACITY_RE = re.compile(
+    r"\b(?:event\s+)?capacity(?:\s+of|\s*:)?\s*(\d{1,5})\b",
+    re.IGNORECASE,
+)
+WAITLIST_RE = re.compile(
+    r"\b(?:sold\s*out|event\s+full|waiting\s+list|waitlist|join\s+(?:the\s+)?waiting\s+list)\b",
+    re.IGNORECASE,
+)
+CLOSED_RE = re.compile(
+    r"\b(?:registration\s+closed|not\s+currently\s+taking\s+registrations)\b",
+    re.IGNORECASE,
+)
 
 
 def parse_datetime(value: Any, timezone: ZoneInfo) -> datetime | None:
@@ -47,6 +74,37 @@ def parse_datetime(value: Any, timezone: ZoneInfo) -> datetime | None:
     if parsed.tzinfo is None:
         return parsed.replace(tzinfo=timezone)
     return parsed.astimezone(timezone)
+
+
+def _nonnegative_int(value: Any) -> int | None:
+    try:
+        parsed = int(str(value).replace(",", "").strip())
+    except (TypeError, ValueError):
+        return None
+    return parsed if parsed >= 0 else None
+
+
+def extract_attendance_metrics(text: str) -> dict[str, Any]:
+    """Extract conservative public signup, capacity, and registration signals."""
+    cleaned = re.sub(r"\s+", " ", text or "").strip()
+    metrics: dict[str, Any] = {}
+    for pattern in ATTENDEE_PATTERNS:
+        match = pattern.search(cleaned)
+        if match:
+            metrics["attendee_count"] = _nonnegative_int(match.group(1))
+            break
+    seats_match = SEATS_LEFT_RE.search(cleaned)
+    if seats_match:
+        metrics["seats_left"] = _nonnegative_int(seats_match.group(1))
+    capacity_match = CAPACITY_RE.search(cleaned)
+    if capacity_match:
+        metrics["capacity"] = _nonnegative_int(capacity_match.group(1))
+    if WAITLIST_RE.search(cleaned):
+        metrics["registration_status"] = "waitlist"
+        metrics["seats_left"] = 0
+    elif CLOSED_RE.search(cleaned):
+        metrics["registration_status"] = "closed"
+    return {key: value for key, value in metrics.items() if value is not None}
 
 
 def _walk_json(value: Any) -> Iterator[dict[str, Any]]:
@@ -113,6 +171,30 @@ def _price_text(item: dict[str, Any]) -> str:
     return "; ".join(prices)
 
 
+def _json_ld_metadata(item: dict[str, Any]) -> dict[str, Any]:
+    metadata: dict[str, Any] = {"extraction": "json-ld"}
+    capacity = _nonnegative_int(item.get("maximumAttendeeCapacity"))
+    seats_left = _nonnegative_int(item.get("remainingAttendeeCapacity"))
+    if capacity is not None:
+        metadata["capacity"] = capacity
+    if seats_left is not None:
+        metadata["seats_left"] = seats_left
+    if capacity is not None and seats_left is not None:
+        metadata["attendee_count"] = max(capacity - seats_left, 0)
+
+    offers = item.get("offers")
+    values = offers if isinstance(offers, list) else [offers]
+    availability = " ".join(
+        str(offer.get("availability", ""))
+        for offer in values
+        if isinstance(offer, dict)
+    )
+    if "soldout" in availability.replace(" ", "").casefold():
+        metadata["registration_status"] = "waitlist"
+        metadata["seats_left"] = 0
+    return metadata
+
+
 def extract_json_ld_events(
     html: str,
     *,
@@ -148,7 +230,7 @@ def extract_json_ld_events(
                     location=location,
                     price_text=_price_text(item),
                     raw_text=" ".join((title, description, location)),
-                    metadata={"extraction": "json-ld"},
+                    metadata=_json_ld_metadata(item),
                 )
             )
     return found

@@ -1,47 +1,90 @@
 # JJs Event Agent
 
-JJs Event Agent discovers relevant upcoming events in Singapore, applies strict timing and topic rules, and publishes the curated result to a responsive, self-contained calendar dashboard deployed with GitHub Pages. Confirmed-free and price-unstated events are labelled separately.
+JJs Event Agent discovers relevant upcoming Singapore events, applies topic and timing rules, and creates a responsive calendar dashboard plus a weekly email summary.
 
-The repository is public so GitHub Pages works on the current account plan. No live credentials, browser profiles, cookies, or private message bodies belong in Git. The Pages artifact contains only the curated fields shown on each card. Summaries from private-message sources are generated from safe event metadata rather than copied from private posts.
+This repository is private and GitHub Pages is disabled. The dashboard is committed as `index.html` and uploaded by each workflow run as the private `private-event-dashboard` artifact. Only accounts with access to this repository can read the code, workflow runs, or artifacts.
 
 ## What qualifies
 
 An event is included only when all of these checks pass:
 
-- **Topic:** at least one of AI, Tech, Robotics, Marketing, Business, or Networking.
-- **Location:** the listing or message explicitly identifies Singapore or a recognized Singapore area.
-- **Price:** confirmed-free and price-unstated events are accepted. Listings with an explicit paid admission price are rejected. “Free food” by itself does **not** prove free admission.
-- **Date:** the event is upcoming and within `LOOKAHEAD_DAYS` (90 by default).
-- **Time:** Monday–Friday strictly after 6:00 PM SGT; Saturday–Sunday from 6:00 AM through 5:59 PM SGT.
+- **Topic:** AI, Tech, Robotics, Marketing, Business, or Networking.
+- **Location:** Singapore or a recognized Singapore area.
+- **Admission:** listings with no displayed price or explicit free admission are accepted; an explicit paid ticket price is rejected. Admission labels are intentionally omitted from the dashboard.
+- **Date:** upcoming and within `LOOKAHEAD_DAYS` (90 by default).
+- **Time:** weekdays strictly after 6:00 PM SGT, or weekends from 6:00 AM through 5:59 PM SGT.
 
-Events mentioning free food, free drinks, pizza, beer, wine, refreshments, refreshment, buffet, light bites, or networking receive a higher ranking and highlighted cards.
+Events mentioning free food, free drinks, pizza, beer, wine, refreshments, buffet, light bites, or networking receive a higher ranking. The dashboard F&B filter lists every detected type and includes “Not stated.”
 
-## Source architecture
+## Sources and update coverage
 
-| Source | Adapter | Authentication | Notes |
+| Source | Adapter | Scheduled GitHub-hosted run | Authenticated/local run |
 |---|---|---|---|
-| LinkedIn | Playwright | `li_at` or cookie JSON | Reads the Following page, then recent activity for followed profiles. |
-| Lu.ma | Playwright | Optional cookie JSON | Reads the Singapore listing, signed-in home view, and explicitly supplied private/unlisted URLs. |
-| Eventbrite | Playwright | Cookie JSON | Uses an authenticated browser session for Singapore free-event search and event details. |
-| Meetup | Requests + BeautifulSoup | None | Uses the Singapore event search and schema.org/card data. |
-| Google Developer Groups | Playwright + schema.org | None | Reads the public events list and GDG Singapore chapter, then verifies detail pages. |
-| WhatsApp | Playwright persistent context | Saved browser profile | Reads only the two exact configured groups and never sends messages. |
+| LinkedIn | Playwright | Skipped because no login session is uploaded | Following network and recent followed-profile activity |
+| Eventbrite | Playwright | Public Singapore search | Same search with optional account cookies |
+| Lu.ma | Playwright | Public `https://luma.com/singapore` discovery | Also account-visible and supplied private/unlisted links |
+| Meetup | Requests + BeautifulSoup | Public Singapore search | Same public search |
+| Google Developer Groups | Playwright + schema.org | Public events and Singapore chapter | Same public search |
+| WhatsApp | Playwright persistent context | Disabled by default | The two configured groups on a trusted persistent machine |
 
-Each source is isolated. A logged-out or changed site reports a source failure while other sources continue and the dashboard is still regenerated. Set `SOURCE_FAILURE_MODE=fail` to make the run fail after the dashboard is produced.
+Each source is isolated. A logged-out or changed site reports a source failure while other sources continue. The workflow preserves the last populated dashboard if a scheduled scrape returns no qualifying events.
 
-An ambiguous label such as “external registration” is accepted as **Price not stated**, never as confirmed free. An explicit paid ticket price still fails the filter.
+The cloud workflow runs **once a week, every Sunday at 8:00 AM SGT**. It does not scrape daily. Authenticated LinkedIn and Eventbrite collection happens only when the agent is run on the local or trusted self-hosted machine that holds those sessions; those browser sessions are deliberately absent from GitHub.
 
-## Dashboard views and summaries
+> Automated access can be limited by each platform's terms and UI changes. Use only accounts and content you are authorized to access. The project does not bypass CAPTCHAs, checkpoints, access controls, or rate limits.
 
-Events are grouped chronologically by month and day, with weekday evenings and weekend daytime events shown in the same calendar-style agenda. The summary tiles break down confirmed-free, price-unstated, explicit F&B, weekday, weekend, and networking counts. Search can be combined with source, admission-confidence, and F&B filters.
+## Dashboard
 
-Every event card includes a summary of at most 99 words. Public event-page descriptions may be condensed into that summary. LinkedIn and WhatsApp message bodies are never copied into the public page; their cards receive a short metadata-based summary instead. “F&B not stated” means only that the source did not explicitly mention food or drinks—it does not claim that none will be served.
+Events are grouped chronologically by month and day. Summary tiles show F&B, weekday-evening, weekend-daytime, and networking counts. Cards include:
 
-> Automated access can be limited by each platform's terms and UI changes. Use only accounts and content you are authorized to access. This project does not bypass CAPTCHAs, checkpoints, access controls, or rate limits.
+- event name, SGT date/time, location, source, and registration link;
+- a summary of at most 99 words;
+- the specific F&B types explicitly mentioned, or “Not stated”; and
+- number going, seats remaining, waitlist, or registration status when the source publishes it.
+
+A **Hot pick** badge appears for at least 50 people going, ten or fewer seats left, or a waitlist/full event. No attendee identities are collected.
+
+Private-source message bodies are not copied into the dashboard or email. LinkedIn and WhatsApp entries use safe metadata-based summaries.
+
+## Private dashboard access
+
+GitHub Pages sites are publicly reachable even when their source repository is private, so the previous `https://jeraldine-t.github.io/JJs-Event-Agent/` site is disabled.
+
+Bookmark the owner-only workflow page instead:
+
+`https://github.com/jeraldine-t/JJs-Event-Agent/actions/workflows/scraper.yml`
+
+To open the latest dashboard:
+
+1. Sign in to the `jeraldine-t` GitHub account.
+2. Open the newest successful workflow run.
+3. Download **private-event-dashboard** under **Artifacts**.
+4. Unzip it and open `index.html` in a browser.
+
+Artifacts are retained for 30 days. The same sanitized `index.html` is also committed to the private repository after a successful refresh.
+
+## Weekly email summary
+
+The scheduled Sunday run attempts to email the curated list to `jeraldine.openai@outlook.com`. Manual workflow runs do not send email. Email is safely skipped until all SMTP secrets are configured.
+
+Use a mail provider that supports app-specific SMTP credentials. Do **not** store an ordinary mailbox password. Microsoft permanently removed Basic-auth SMTP client submission in Exchange Online in March 2026, so an Outlook/Microsoft 365 account password is not a supported sender credential. The recipient can still be the Outlook address; the sender may use any compatible SMTP provider.
+
+In **Settings → Secrets and variables → Actions → New repository secret**, add:
+
+| Secret | Example/purpose |
+|---|---|
+| `SMTP_HOST` | Provider SMTP hostname |
+| `SMTP_PORT` | Usually `587` for STARTTLS or `465` for implicit TLS |
+| `SMTP_SECURITY` | `starttls` or `ssl` |
+| `SMTP_USERNAME` | Provider account or SMTP username |
+| `SMTP_PASSWORD` | App-specific password/token, never the normal account password |
+| `SMTP_FROM` | Verified sender email address |
+
+GitHub encrypts Actions secrets and masks them from normal logs. The workflow never writes these values to `index.html`, artifacts, commits, or source-status messages. Keep LinkedIn, Eventbrite, Lu.ma, and WhatsApp login sessions local unless you later choose a locked-down self-hosted runner.
 
 ## Local setup
 
-Requirements: Python 3.11+ and a Chromium-compatible environment.
+Requirements: Python 3.11+ and Chromium.
 
 ```bash
 git clone https://github.com/jeraldine-t/JJs-Event-Agent.git
@@ -53,16 +96,16 @@ python -m playwright install chromium
 cp .env.example .env
 ```
 
-Fill `.env`, then run:
+Fill only the local values you need in `.env`, then run:
 
 ```bash
 python -m event_agent
 ```
 
-For a credential-free smoke run that overwrites the local dashboard:
+Run selected public sources:
 
 ```bash
-python -m event_agent --sources ""
+python -m event_agent --sources luma,eventbrite,meetup,gdg
 ```
 
 Quality checks:
@@ -72,121 +115,70 @@ ruff check .
 pytest
 ```
 
-## LinkedIn session
+## LinkedIn and Eventbrite sessions
 
-The current public deployment intentionally keeps LinkedIn login data **off GitHub**, including GitHub Actions Secrets. Authenticated LinkedIn collection is performed through the signed-in local browser; only qualifying event fields are rendered into `index.html`.
-
-For a trusted local or self-hosted machine, the scraper also supports the value of LinkedIn's `li_at` session cookie in a local `.env`:
-
-```dotenv
-LINKEDIN_LI_AT=your_value_here
-```
-
-Alternatively, `LINKEDIN_COOKIES_JSON` accepts a Playwright-compatible JSON array (or its base64 encoding):
-
-```json
-[{"name":"li_at","value":"...","domain":".linkedin.com","path":"/","secure":true,"httpOnly":true}]
-```
-
-Treat the value like a password. Never commit it, paste it into chat, or upload it to this public repository. If LinkedIn redirects to login or a checkpoint, refresh the local session manually; the agent deliberately does not bypass the checkpoint.
-
-The included login helper can create ignored local cookie JSON for a self-hosted run:
+Create ignored local Playwright cookie files through the interactive helper:
 
 ```bash
 python -m event_agent.bootstrap cookies linkedin
-```
-
-## Eventbrite session
-
-Eventbrite public search rejects plain hosted HTTP requests, so its adapter uses Playwright. The current deployment reuses the signed-in local browser for authenticated manual collection and does not upload the session to GitHub. A trusted self-hosted machine can create an ignored local session file with:
-
-```bash
 python -m event_agent.bootstrap cookies eventbrite
 ```
 
-The exported array preserves the correct `.eventbrite.com` and `.eventbrite.sg` cookie domains. Keep it local and rotate it if Eventbrite returns a sign-in page or access challenge.
+For LinkedIn, a trusted local `.env` may instead contain `LINKEDIN_LI_AT`, or `LINKEDIN_COOKIES_JSON` may contain a Playwright-compatible cookie array. Eventbrite uses `EVENTBRITE_COOKIES_JSON` when supplied.
 
-## Lu.ma session and private links
+Treat all cookie values like passwords. Never commit them, paste them into chat, include them in an artifact, or copy them into a workflow file. If a site redirects to a checkpoint, sign in again manually; the agent does not automate a checkpoint or CAPTCHA.
 
-Set `LUMA_COOKIES_JSON` to a Playwright-compatible JSON cookie array from your signed-in Lu.ma session. Add known private/unlisted event links to the comma-separated `LUMA_PRIVATE_URLS` value. The adapter also scans the authenticated home view for account-visible event links.
+## Lu.ma private links
 
-An unlisted URL is often itself a bearer credential. Store `LUMA_PRIVATE_URLS` as a GitHub **Secret**, never in `.env.example`, logs, issues, or commits.
+`LUMA_COOKIES_JSON` accepts a Playwright-compatible array from a signed-in local Lu.ma session. `LUMA_PRIVATE_URLS` accepts comma-separated private/unlisted event links and is read in addition to the public Singapore discovery page.
 
-## WhatsApp Web persistent login
+An unlisted URL can function as a bearer credential. Keep it in the ignored local `.env` or in a locked-down self-hosted environment, never in code, logs, or commits.
 
-Create the browser profile once on the machine that will run the scraper:
+## WhatsApp persistent login
+
+Bootstrap the local persistent profile once:
 
 ```bash
 PLAYWRIGHT_HEADLESS=false python -m event_agent.bootstrap whatsapp --profile .state/whatsapp
 ```
 
-Scan the QR code if prompted and wait until the chat list is visible before pressing Enter in the terminal. The ignored `.state/whatsapp` directory then keeps the login between runs.
+WhatsApp is excluded from the default schedule because GitHub-hosted runners are erased after each job. A self-hosted runner can opt in with an absolute `WHATSAPP_USER_DATA_DIR`. Never commit or upload the browser profile.
 
-WhatsApp Web login state is a browser profile, not a small portable cookie. A GitHub-hosted runner is erased after each job, so WhatsApp cannot reliably remain signed in there. WhatsApp is therefore excluded from the default scheduled source list. To opt in, attach a trusted self-hosted runner and configure:
-
-- repository variable `SCRAPER_RUNNER` = `self-hosted` (or a matching runner label);
-- repository variable `WHATSAPP_USER_DATA_DIR` = the absolute profile path on that runner;
-- workflow `ENABLED_SOURCES` to include `whatsapp`; and
-- a locked-down runner account with access to that directory.
-
-Never commit, artifact, or upload the WhatsApp profile—it grants account access and may contain local message data.
-
-The two monitored chats are exact-name matches:
+The exact configured chats are:
 
 - `Codex Community - Main Chat`
 - `non-RWA events, programs, initiatives`
 
-## GitHub Actions privacy and variables
+## GitHub Actions workflow
 
-The public repository is intentionally configured with **zero GitHub Actions Secrets**. LinkedIn cookies, Eventbrite cookies, passwords, browser profiles, and raw source messages must stay on the local machine and must never be committed or uploaded as artifacts.
+`.github/workflows/scraper.yml` runs at Sunday 8:00 AM in `Asia/Singapore` and supports manual runs. It:
 
-Optional repository variables:
+1. installs the package and Chromium;
+2. runs Ruff and pytest;
+3. collects enabled sources and overwrites `index.html`;
+4. preserves the previous populated dashboard after an empty scrape;
+5. commits and pushes a changed dashboard;
+6. sends the scheduled email when SMTP secrets are configured; and
+7. uploads `index.html` as the owner-only `private-event-dashboard` artifact.
 
-| Variable | Purpose |
-|---|---|
-| `SCRAPER_RUNNER` | Defaults to `ubuntu-latest`; use `self-hosted` for persistent WhatsApp. |
-| `WHATSAPP_USER_DATA_DIR` | Absolute persistent profile path on the self-hosted runner. |
-
-The workflow explicitly requests `contents: write`, `pages: write`, and `id-token: write`. If an organization policy restricts `GITHUB_TOKEN`, allow Actions read/write access under **Settings → Actions → General → Workflow permissions**, or the dashboard commit will fail.
-
-## Schedule, dashboard commit, and GitHub Pages
-
-`.github/workflows/scraper.yml` runs at **8:00 AM every Sunday in `Asia/Singapore`**, and also supports manual runs from the Actions tab. Scheduled cloud runs can access only anonymous/public sources unless a trusted self-hosted runner is configured. If an automated scrape returns zero events, the workflow preserves the last populated dashboard.
-
-For a privacy-preserving deployment after a local authenticated scrape, run the workflow manually with `refresh_data=false`. It deploys the committed sanitized dashboard without running source collectors.
-
-The workflow:
-
-1. installs and tests the package;
-2. installs Playwright Chromium when source collection is enabled;
-3. optionally runs the configured source adapters;
-4. overwrites `index.html`;
-5. commits and pushes `index.html` if it changed; and
-6. uploads only `index.html` plus `.nojekyll` as the public Pages artifact.
-
-One-time Pages setup:
-
-1. Open **Settings → Pages**.
-2. Under **Build and deployment → Source**, select **GitHub Actions**.
-3. Run **Weekly event scrape and Pages deploy** from the Actions tab.
-
-The live project URL is `https://jeraldine-t.github.io/JJs-Event-Agent/` and is recorded on the deployment job. The workflow deploys only the sanitized single-page artifact.
+The workflow requests only `contents: write`; it has no Pages or identity-token permission. If repository policy restricts `GITHUB_TOKEN`, allow Actions read/write access under **Settings → Actions → General → Workflow permissions** so the dashboard commit can succeed.
 
 ## Environment reference
 
-Every supported variable is documented in `.env.example`. Useful tuning values include:
+Every supported variable is listed in `.env.example`. Common tuning values include:
 
 - `LOOKAHEAD_DAYS` and `MESSAGE_LOOKBACK_DAYS`;
 - LinkedIn profile/post caps and Eventbrite/Lu.ma/GDG event caps;
 - `EVENTBRITE_SEARCH_URLS` and `MEETUP_SEARCH_URLS` as pipe-separated overrides;
-- `SOURCE_FAILURE_MODE=warn|fail`.
+- `SOURCE_FAILURE_MODE=warn|fail`; and
+- `EMAIL_ENABLED`, recipient, and SMTP transport settings.
 
 ## Troubleshooting
 
-- **Empty dashboard:** inspect the expandable run-health panel and Actions logs. Singapore, keyword, date, timing, and explicit-paid-price filters intentionally reject out-of-scope listings.
-- **LinkedIn checkpoint:** refresh your own session cookie. Do not automate checkpoint or CAPTCHA bypass.
-- **Eventbrite login/challenge:** refresh `EVENTBRITE_COOKIES_JSON`; the agent does not bypass access challenges.
-- **Lu.ma private event missing:** add its exact link to the secret `LUMA_PRIVATE_URLS` and refresh the cookies.
-- **WhatsApp skipped in Actions:** use a self-hosted runner with the bootstrapped persistent directory.
-- **Pages deployment fails:** enable GitHub Actions as the Pages source and confirm the account plan supports Pages for private repositories.
-- **Site selector changed:** Playwright/BeautifulSoup adapters are isolated under `src/event_agent/sources/`; update the affected adapter and its tests without changing the filter/output pipeline.
+- **Empty dashboard:** inspect the run-health panel and Actions logs. Topic, Singapore, date, timing, and explicit-paid-price filters may reject listings.
+- **LinkedIn skipped in Actions:** expected while credentials remain local; run locally or use a trusted self-hosted runner.
+- **Eventbrite challenge:** refresh the local session; access challenges are not bypassed.
+- **Lu.ma private event missing:** add its exact link locally and refresh the local cookies.
+- **Email skipped:** add all six SMTP secrets and wait for the next scheduled run; manual runs intentionally do not send.
+- **Dashboard bookmark returns 404:** sign in as `jeraldine-t`; private repository pages are invisible to other accounts.
+- **Site selector changed:** update the isolated adapter under `src/event_agent/sources/` and its tests.

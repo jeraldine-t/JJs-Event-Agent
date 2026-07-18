@@ -10,7 +10,11 @@ from playwright.sync_api import Page, sync_playwright
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 from event_agent.config import Settings
-from event_agent.extraction import extract_event_from_text, extract_json_ld_events
+from event_agent.extraction import (
+    extract_attendance_metrics,
+    extract_event_from_text,
+    extract_json_ld_events,
+)
 from event_agent.models import RawEvent
 
 LOGGER = logging.getLogger(__name__)
@@ -65,10 +69,12 @@ def parse_gdg_detail(
         timezone=timezone,
     )
     price_text = _registration_price_text("\n".join((listing_text, body_text)))
+    attendance = extract_attendance_metrics(body_text)
     for event in events:
         event.price_text = price_text
         event.raw_text = body_text[:20_000]
         event.metadata["registration_signal"] = price_text
+        event.metadata.update(attendance)
     return events
 
 
@@ -139,6 +145,7 @@ class GDGSource:
                         event.price_text = _registration_price_text(
                             "\n".join((hints.get(url, ""), body_text))
                         )
+                        event.metadata.update(extract_attendance_metrics(body_text))
                         events.append(event)
                 except Exception as exc:
                     LOGGER.warning("GDG event detail failed (%s)", type(exc).__name__)

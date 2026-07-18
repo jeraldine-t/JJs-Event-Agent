@@ -1,4 +1,4 @@
-name: Weekly event scrape and Pages deploy
+name: Weekly event scrape and private dashboard
 
 on:
   schedule:
@@ -7,19 +7,17 @@ on:
   workflow_dispatch:
     inputs:
       refresh_data:
-        description: Scrape sources before deploying; disable to deploy the committed dashboard
+        description: Scrape sources before uploading; disable to use the committed dashboard
         required: true
         default: true
         type: boolean
 
 concurrency:
-  group: jjs-event-agent-pages
+  group: jjs-event-agent-private-dashboard
   cancel-in-progress: false
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 jobs:
   scrape:
@@ -30,11 +28,14 @@ jobs:
       ENABLED_SOURCES: linkedin,eventbrite,luma,meetup,gdg
       PLAYWRIGHT_HEADLESS: "true"
       SOURCE_FAILURE_MODE: warn
-      LINKEDIN_LI_AT: ${{ secrets.LINKEDIN_LI_AT }}
-      LINKEDIN_COOKIES_JSON: ${{ secrets.LINKEDIN_COOKIES_JSON }}
-      EVENTBRITE_COOKIES_JSON: ${{ secrets.EVENTBRITE_COOKIES_JSON }}
-      LUMA_COOKIES_JSON: ${{ secrets.LUMA_COOKIES_JSON }}
-      LUMA_PRIVATE_URLS: ${{ secrets.LUMA_PRIVATE_URLS }}
+      EMAIL_ENABLED: ${{ github.event_name == 'schedule' }}
+      EMAIL_RECIPIENT: jeraldine.openai@outlook.com
+      SMTP_HOST: ${{ secrets.SMTP_HOST }}
+      SMTP_PORT: ${{ secrets.SMTP_PORT }}
+      SMTP_SECURITY: ${{ secrets.SMTP_SECURITY }}
+      SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      SMTP_FROM: ${{ secrets.SMTP_FROM }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -89,27 +90,19 @@ jobs:
           git pull --rebase origin "${GITHUB_REF_NAME}"
           git push origin "HEAD:${GITHUB_REF_NAME}"
 
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v6
-
-      - name: Prepare public site artifact
-        run: |
-          mkdir -p "${RUNNER_TEMP}/jjs-event-site"
-          cp index.html "${RUNNER_TEMP}/jjs-event-site/index.html"
-          touch "${RUNNER_TEMP}/jjs-event-site/.nojekyll"
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v4
+      - name: Upload owner-only dashboard artifact
+        uses: actions/upload-artifact@v4
         with:
-          path: ${{ runner.temp }}/jjs-event-site
+          name: private-event-dashboard
+          path: index.html
+          if-no-files-found: error
+          retention-days: 30
 
-  deploy:
-    needs: scrape
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy dashboard to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Add private dashboard instructions
+        run: |
+          {
+            echo "## Private event dashboard"
+            echo "Download **private-event-dashboard** from the Artifacts section of this run, unzip it, and open index.html."
+            echo ""
+            echo "This artifact requires read access to this private repository."
+          } >> "${GITHUB_STEP_SUMMARY}"

@@ -7,7 +7,11 @@ from urllib.parse import urljoin, urlsplit
 from playwright.sync_api import Page, sync_playwright
 
 from event_agent.config import Settings
-from event_agent.extraction import extract_event_from_text, extract_json_ld_events
+from event_agent.extraction import (
+    extract_attendance_metrics,
+    extract_event_from_text,
+    extract_json_ld_events,
+)
 from event_agent.models import RawEvent
 from event_agent.sources.browser_utils import parse_cookie_json
 
@@ -93,10 +97,14 @@ class LumaSource:
                         page_url=page.url,
                         timezone=settings.timezone,
                     )
+                    body_text = page.locator("body").inner_text(timeout=5_000)
+                    metrics = extract_attendance_metrics(body_text)
                     if structured:
+                        for event in structured:
+                            event.metadata.update(metrics)
+                            event.raw_text = body_text[:20_000]
                         events.extend(structured)
                         continue
-                    body_text = page.locator("body").inner_text(timeout=5_000)
                     event = extract_event_from_text(
                         body_text,
                         source=self.name,
@@ -105,6 +113,7 @@ class LumaSource:
                         timezone=settings.timezone,
                     )
                     if event:
+                        event.metadata.update(metrics)
                         events.append(event)
                 except Exception as exc:
                     LOGGER.warning("Lu.ma event detail failed (%s)", type(exc).__name__)

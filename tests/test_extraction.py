@@ -1,7 +1,11 @@
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from event_agent.extraction import extract_event_from_text, extract_json_ld_events
+from event_agent.extraction import (
+    extract_attendance_metrics,
+    extract_event_from_text,
+    extract_json_ld_events,
+)
 
 SGT = ZoneInfo("Asia/Singapore")
 
@@ -63,3 +67,33 @@ def test_relative_weekday_card_keeps_afternoon_time() -> None:
     )
     assert event is not None
     assert event.start_at == datetime(2026, 7, 22, 14, 30, tzinfo=SGT)
+
+
+def test_extracts_luma_style_attendance_and_waitlist() -> None:
+    metrics = extract_attendance_metrics("284 Going Event Full Join the Waiting List")
+    assert metrics == {
+        "attendee_count": 284,
+        "registration_status": "waitlist",
+        "seats_left": 0,
+    }
+
+
+def test_extracts_seats_left_and_capacity() -> None:
+    metrics = extract_attendance_metrics("Only 8 seats left. Event capacity: 120")
+    assert metrics == {"seats_left": 8, "capacity": 120}
+
+
+def test_json_ld_capacity_becomes_signup_metrics() -> None:
+    html = """
+    <script type="application/ld+json">
+    {"@context":"https://schema.org","@type":"Event","name":"AI Night",
+     "startDate":"2026-07-20T19:00:00+08:00","location":"Singapore",
+     "maximumAttendeeCapacity":100,"remainingAttendeeCapacity":12}
+    </script>
+    """
+    event = extract_json_ld_events(
+        html, source="Fixture", page_url="https://example.com/event", timezone=SGT
+    )[0]
+    assert event.metadata["capacity"] == 100
+    assert event.metadata["seats_left"] == 12
+    assert event.metadata["attendee_count"] == 88

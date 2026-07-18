@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "jjs-event-agent"
 version = "1.0.0"
-description = "A Singapore-focused event discovery agent with admission confidence and a live dashboard."
+description = "A Singapore-focused event discovery agent with F&B and signup-interest signals."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
