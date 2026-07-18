@@ -1,0 +1,97 @@
+name: Weekly event scrape and Pages deploy
+
+on:
+  schedule:
+    - cron: "0 8 * * 0"
+      timezone: "Asia/Singapore"
+  workflow_dispatch:
+
+concurrency:
+  group: jjs-event-agent-pages
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  scrape:
+    runs-on: ${{ vars.SCRAPER_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 45
+    env:
+      TIMEZONE: Asia/Singapore
+      ENABLED_SOURCES: linkedin,luma,eventbrite,meetup,telegram
+      PLAYWRIGHT_HEADLESS: "true"
+      SOURCE_FAILURE_MODE: warn
+      REQUIRE_TELEGRAM_OUTPUT: "true"
+      LINKEDIN_LI_AT: ${{ secrets.LINKEDIN_LI_AT }}
+      LINKEDIN_COOKIES_JSON: ${{ secrets.LINKEDIN_COOKIES_JSON }}
+      LUMA_COOKIES_JSON: ${{ secrets.LUMA_COOKIES_JSON }}
+      LUMA_PRIVATE_URLS: ${{ secrets.LUMA_PRIVATE_URLS }}
+      TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
+      TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
+      TELEGRAM_SESSION_STRING: ${{ secrets.TELEGRAM_SESSION_STRING }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      MY_TELEGRAM_CHAT_ID: ${{ secrets.MY_TELEGRAM_CHAT_ID }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install package and test tools
+        run: python -m pip install -e ".[dev]"
+
+      - name: Install Chromium
+        run: python -m playwright install --with-deps chromium
+
+      - name: Run quality checks
+        run: |
+          ruff check .
+          pytest
+
+      - name: Collect events and publish both outputs
+        run: python -m event_agent
+
+      - name: Commit refreshed dashboard
+        run: |
+          if git diff --quiet -- index.html; then
+            echo "Dashboard is unchanged"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Refresh event dashboard"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v6
+
+      - name: Prepare public site artifact
+        run: |
+          mkdir -p "${RUNNER_TEMP}/jjs-event-site"
+          cp index.html "${RUNNER_TEMP}/jjs-event-site/index.html"
+          touch "${RUNNER_TEMP}/jjs-event-site/.nojekyll"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ${{ runner.temp }}/jjs-event-site
+
+  deploy:
+    needs: scrape
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy dashboard to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

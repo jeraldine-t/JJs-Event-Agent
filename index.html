@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Curated free AI, tech, robotics, marketing, business, and networking events in Singapore.">
+  <title>JJs Event Agent · Singapore</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07110f;
+      --surface: rgba(17, 35, 31, .82);
+      --surface-strong: #132b25;
+      --line: rgba(171, 225, 205, .14);
+      --text: #f1f8f5;
+      --muted: #9db6ad;
+      --lime: #b9f66c;
+      --mint: #64e6bb;
+      --peach: #ffb38a;
+      --shadow: 0 24px 70px rgba(0, 0, 0, .28);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 5%, rgba(57, 204, 157, .18), transparent 32rem),
+        radial-gradient(circle at 88% 28%, rgba(185, 246, 108, .10), transparent 28rem),
+        var(--bg);
+      font: 15px/1.55 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    a { color: inherit; }
+    .shell { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 54px 0 80px; }
+    header { display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: end; margin-bottom: 28px; }
+    .eyebrow { color: var(--mint); text-transform: uppercase; letter-spacing: .16em; font-size: 12px; font-weight: 800; }
+    h1 { margin: 7px 0 8px; max-width: 760px; font-size: clamp(38px, 7vw, 76px); line-height: .98; letter-spacing: -.055em; }
+    .intro { max-width: 690px; margin: 0; color: var(--muted); font-size: 17px; }
+    .count {
+      min-width: 148px; padding: 18px 20px; border: 1px solid var(--line); border-radius: 22px;
+      background: var(--surface); box-shadow: var(--shadow); text-align: center; backdrop-filter: blur(16px);
+    }
+    .count strong { display: block; color: var(--lime); font-size: 40px; line-height: 1; }
+    .count span { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .1em; }
+    .toolbar {
+      display: grid; grid-template-columns: minmax(220px, 1fr) auto; gap: 12px; margin: 26px 0;
+      position: sticky; top: 12px; z-index: 5;
+    }
+    .search, .select {
+      width: 100%; height: 48px; border: 1px solid var(--line); border-radius: 14px;
+      background: rgba(13, 29, 25, .92); color: var(--text); padding: 0 16px; outline: none;
+      backdrop-filter: blur(18px);
+    }
+    .search:focus, .select:focus { border-color: var(--mint); box-shadow: 0 0 0 3px rgba(100, 230, 187, .12); }
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+    .card {
+      grid-column: span 6; display: flex; flex-direction: column; min-height: 315px; padding: 22px;
+      border: 1px solid var(--line); border-radius: 24px; background: var(--surface);
+      box-shadow: var(--shadow); transition: transform .2s ease, border-color .2s ease; overflow: hidden;
+    }
+    .card:hover { transform: translateY(-3px); border-color: rgba(185, 246, 108, .38); }
+    .card.featured { background: linear-gradient(145deg, rgba(31, 65, 53, .96), rgba(13, 29, 25, .9)); }
+    .topline { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+    .source { color: var(--mint); font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .free { color: #07110f; background: var(--lime); border-radius: 999px; padding: 4px 9px; font-size: 11px; font-weight: 900; text-transform: uppercase; }
+    h2 { margin: 23px 0 15px; font-size: clamp(22px, 3vw, 31px); line-height: 1.13; letter-spacing: -.025em; }
+    .meta { display: grid; gap: 7px; color: var(--muted); }
+    .meta span { display: flex; gap: 9px; align-items: flex-start; }
+    .tags { display: flex; flex-wrap: wrap; gap: 7px; margin: 20px 0; }
+    .tag { padding: 5px 9px; border: 1px solid var(--line); border-radius: 999px; background: rgba(100, 230, 187, .06); color: #cce5dc; font-size: 12px; }
+    .tag.perk { border-color: rgba(255, 179, 138, .28); color: var(--peach); background: rgba(255, 179, 138, .07); }
+    .register { margin-top: auto; display: inline-flex; justify-content: space-between; align-items: center; text-decoration: none; font-weight: 800; }
+    .register span:last-child { color: var(--lime); font-size: 22px; }
+    .empty, .status-panel { grid-column: 1 / -1; padding: 28px; border: 1px solid var(--line); border-radius: 22px; background: var(--surface); }
+    .empty h2 { margin-top: 0; }
+    .status-panel { margin-top: 32px; }
+    .status-panel summary { cursor: pointer; font-weight: 800; }
+    .statuses { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-top: 18px; }
+    .status { padding: 13px; border-radius: 14px; background: rgba(255,255,255,.035); }
+    .state-ok { color: var(--mint); } .state-skipped { color: #f3d38a; } .state-failed { color: #ff9e9e; }
+    footer { margin-top: 24px; color: var(--muted); font-size: 12px; }
+    [hidden] { display: none !important; }
+    @media (max-width: 760px) {
+      .shell { width: min(100% - 22px, 1180px); padding-top: 32px; }
+      header { grid-template-columns: 1fr; align-items: start; }
+      .count { width: 100%; display: flex; justify-content: center; gap: 10px; align-items: baseline; }
+      .toolbar { grid-template-columns: 1fr; }
+      .card { grid-column: 1 / -1; min-height: 0; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div>
+        <div class="eyebrow">Singapore · Free events only</div>
+        <h1>Worth leaving the house for.</h1>
+        <p class="intro">AI, tech, robotics, marketing, business and networking events that fit after-work or weekend daytime hours—with the good perks called out.</p>
+      </div>
+      <div class="count"><strong id="visible-count">0</strong><span>events found</span></div>
+    </header>
+
+    <div class="toolbar" aria-label="Event filters">
+      <input class="search" id="search" type="search" placeholder="Search events, places or perks…" aria-label="Search events">
+      <select class="select" id="source" aria-label="Filter by source">
+        <option value="">All sources</option>
+      </select>
+    </div>
+
+    <section class="grid" id="events" aria-live="polite">
+      <div class="empty" id="empty">
+        <h2>No matches yet.</h2>
+        <p>The latest run found no events that met every strict filter. Check back after the next Sunday refresh.</p>
+      </div>
+    </section>
+
+    <details class="status-panel">
+      <summary>Run health · generated 18 Jul 2026, 12:57 PM SGT</summary>
+      <div class="statuses">
+      </div>
+      <p><small>Accepted 0. Rejections: none.</small></p>
+    </details>
+    <footer>Times shown in Singapore Time (SGT). “$0 verified” requires explicit free-admission evidence in the source; free refreshments alone never qualify an event.</footer>
+  </main>
+  <script>
+    const search = document.querySelector('#search');
+    const source = document.querySelector('#source');
+    const cards = [...document.querySelectorAll('.card')];
+    const count = document.querySelector('#visible-count');
+    const empty = document.querySelector('#empty');
+    function filterCards() {
+      const query = search.value.trim().toLowerCase();
+      const selected = source.value;
+      let visible = 0;
+      cards.forEach(card => {
+        const show = (!query || card.dataset.search.includes(query)) && (!selected || card.dataset.source === selected);
+        card.hidden = !show;
+        if (show) visible += 1;
+      });
+      count.textContent = visible;
+      empty.hidden = visible !== 0;
+    }
+    search.addEventListener('input', filterCards);
+    source.addEventListener('change', filterCards);
+  </script>
+</body>
+</html>
