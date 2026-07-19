@@ -8,3 +8,4 @@ def test_blank_whatsapp_path_uses_safe_ignored_default(tmp_path, monkeypatch) ->
     assert settings.whatsapp_user_data_dir == tmp_path / ".state/whatsapp"
     assert "whatsapp" not in settings.enabled_sources
     assert settings.enabled_sources == ("linkedin", "eventbrite", "luma", "meetup", "gdg")
+    assert settings.meetup_max_events == 60

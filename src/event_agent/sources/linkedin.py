@@ -7,13 +7,21 @@ from urllib.parse import urljoin, urlsplit, urlunsplit
 from playwright.sync_api import Page, sync_playwright
 
 from event_agent.config import Settings
-from event_agent.extraction import extract_event_from_text
+from event_agent.extraction import extract_detail_page_events, extract_event_from_text
 from event_agent.models import RawEvent
 from event_agent.sources.base import SourceNotConfigured
 from event_agent.sources.browser_utils import parse_cookie_json
 
 LOGGER = logging.getLogger(__name__)
 FOLLOWING_URL = "https://www.linkedin.com/mynetwork/network-manager/people-follow/following/"
+EVENT_DETAIL_HOSTS = (
+    "eventbrite.com",
+    "eventbrite.sg",
+    "gdg.community.dev",
+    "lu.ma",
+    "luma.com",
+    "meetup.com",
+)
 
 
 def _profile_url(href: str) -> str:
@@ -26,6 +34,14 @@ def _scroll(page: Page, rounds: int = 5) -> None:
     for _ in range(rounds):
         page.mouse.wheel(0, 4000)
         page.wait_for_timeout(600)
+
+
+def _event_detail_url(links: list[str]) -> str:
+    for link in links:
+        hostname = (urlsplit(link).hostname or "").casefold()
+        if any(hostname == host or hostname.endswith(f".{host}") for host in EVENT_DETAIL_HOSTS):
+            return link
+    return ""
 
 
 class LinkedInSource:
@@ -59,6 +75,7 @@ class LinkedInSource:
             page.goto(FOLLOWING_URL, wait_until="domcontentloaded", timeout=60_000)
             if "/login" in page.url or "/checkpoint" in page.url:
                 raise RuntimeError("LinkedIn session was rejected or requires a checkpoint")
+            detail_page = context.new_page()
             _scroll(page)
             profile_links = page.locator('a[href*="/in/"]').evaluate_all(
                 "els => els.map(el => el.href)"
@@ -94,10 +111,40 @@ class LinkedInSource:
                             timezone=settings.timezone,
                         )
                         if event:
+                            # The LinkedIn post helps discover the event, but its private
+                            # body is never used as the public dashboard overview.
+                            event.description = ""
+                            detail_url = _event_detail_url(links)
+                            if detail_url:
+                                try:
+                                    detail_page.goto(
+                                        detail_url,
+                                        wait_until="domcontentloaded",
+                                        timeout=45_000,
+                                    )
+                                    structured = extract_detail_page_events(
+                                        detail_page.content(),
+                                        source=self.name,
+                                        page_url=detail_page.url,
+                                        timezone=settings.timezone,
+                                    )
+                                    if structured:
+                                        detail = max(
+                                            structured,
+                                            key=lambda candidate: len(candidate.description),
+                                        )
+                                        detail.raw_text = event.raw_text
+                                        detail.metadata["discovered_via"] = "linkedin"
+                                        events.append(detail)
+                                        continue
+                                except Exception as exc:
+                                    LOGGER.warning(
+                                        "LinkedIn event overview failed (%s)",
+                                        type(exc).__name__,
+                                    )
                             events.append(event)
                 except Exception as exc:  # one profile must not abort the network scan
                     LOGGER.warning("LinkedIn profile failed (%s): %s", profile, exc)
             context.close()
             browser.close()
         return events
-

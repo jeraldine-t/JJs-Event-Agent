@@ -8,7 +8,12 @@ import requests
 from bs4 import BeautifulSoup
 
 from event_agent.config import Settings
-from event_agent.extraction import extract_events_from_cards, extract_json_ld_events
+from event_agent.extraction import (
+    extract_attendance_metrics,
+    extract_detail_page_events,
+    extract_events_from_cards,
+    extract_json_ld_events,
+)
 from event_agent.models import RawEvent
 
 LOGGER = logging.getLogger(__name__)
@@ -16,6 +21,14 @@ USER_AGENT = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131 Safari/537.36"
 )
+
+
+def _is_meetup_event_url(url: str) -> bool:
+    parts = urlsplit(url)
+    hostname = (parts.hostname or "").casefold()
+    return (hostname == "meetup.com" or hostname.endswith(".meetup.com")) and (
+        "/events/" in parts.path.casefold()
+    )
 
 
 def _candidate_cards(html: str, page_url: str, host_hint: str) -> list[dict[str, str]]:
@@ -55,26 +68,52 @@ class MeetupSource:
             }
         )
         events: list[RawEvent] = []
+        event_urls: list[str] = []
         for url in self._urls(settings):
             LOGGER.info("Fetching Meetup search page: %s", url)
             response = session.get(url, timeout=settings.http_timeout_seconds)
             response.raise_for_status()
-            events.extend(
-                extract_json_ld_events(
-                    response.text,
-                    source=self.name,
-                    page_url=url,
-                    timezone=settings.timezone,
-                )
+            listing_events = extract_json_ld_events(
+                response.text,
+                source=self.name,
+                page_url=url,
+                timezone=settings.timezone,
+            )
+            event_urls.extend(
+                event.url for event in listing_events if _is_meetup_event_url(event.url)
             )
             cards = _candidate_cards(response.text, url, "meetup.com")
-            events.extend(
-                extract_events_from_cards(
-                    cards,
-                    source=self.name,
-                    reference_time=now,
-                    timezone=settings.timezone,
-                    location_hint="Singapore",
-                )
+            card_events = extract_events_from_cards(
+                cards,
+                source=self.name,
+                reference_time=now,
+                timezone=settings.timezone,
+                location_hint="Singapore",
             )
+            event_urls.extend(
+                event.url for event in card_events if _is_meetup_event_url(event.url)
+            )
+
+        detail_urls = list(dict.fromkeys(event_urls))[: settings.meetup_max_events]
+        LOGGER.info("Meetup: inspecting %d event detail pages", len(detail_urls))
+        for url in detail_urls:
+            try:
+                response = session.get(url, timeout=settings.http_timeout_seconds)
+                response.raise_for_status()
+                body_text = BeautifulSoup(response.text, "html.parser").get_text(
+                    "\n", strip=True
+                )
+                structured = extract_detail_page_events(
+                    response.text,
+                    source=self.name,
+                    page_url=response.url,
+                    timezone=settings.timezone,
+                )
+                metrics = extract_attendance_metrics(body_text)
+                for event in structured:
+                    event.metadata.update(metrics)
+                    event.raw_text = body_text[:20_000]
+                events.extend(structured)
+            except Exception as exc:
+                LOGGER.warning("Meetup detail failed (%s)", type(exc).__name__)
         return events

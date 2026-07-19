@@ -12,7 +12,7 @@ def _event() -> Event:
     return Event(
         source="LinkedIn",
         title="AI Builders Night",
-        description="Private LinkedIn post body must not be emailed.",
+        description="Organizer overview from the linked event page.",
         url="https://example.com/register",
         start_at=datetime(2026, 7, 20, 19, 0, tzinfo=SGT),
         location="Singapore",
@@ -36,7 +36,7 @@ def _settings(tmp_path, monkeypatch) -> Settings:
     return Settings.from_env(tmp_path)
 
 
-def test_email_summary_contains_curated_fields_not_private_body(tmp_path, monkeypatch) -> None:
+def test_email_summary_contains_detail_page_overview(tmp_path, monkeypatch) -> None:
     settings = _settings(tmp_path, monkeypatch)
     message = email_output.build_email_summary(
         [_event()], settings, datetime(2026, 7, 18, 8, 0, tzinfo=SGT)
@@ -47,8 +47,9 @@ def test_email_summary_contains_curated_fields_not_private_body(tmp_path, monkey
     assert "AI Builders Night" in rendered
     assert "Pizza" in rendered
     assert "75 going" in rendered
-    assert "Private LinkedIn post body" not in rendered
-    assert "No public description is displayed for this private-source event." in rendered
+    assert "Organizer overview from the linked event page." in rendered
+    assert "event description was provided" not in rendered
+    assert "JJ's Event Agent" in headers
 
 
 def test_email_delivery_uses_starttls_and_app_credential(tmp_path, monkeypatch) -> None:

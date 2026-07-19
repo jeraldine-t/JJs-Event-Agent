@@ -9,7 +9,7 @@ NOW = datetime(2026, 7, 13, 9, 0, tzinfo=SGT)  # Monday
 
 
 def candidate(start_at: datetime, text: str, *, price: str = "Free") -> RawEvent:
-    return RawEvent(
+    event = RawEvent(
         source="Test",
         title="AI builders networking night",
         description=text,
@@ -19,6 +19,8 @@ def candidate(start_at: datetime, text: str, *, price: str = "Free") -> RawEvent
         price_text=price,
         raw_text=text,
     )
+    event.metadata["overview_source"] = "event-detail-page"
+    return event
 
 
 def test_weekday_must_be_strictly_after_6pm() -> None:
@@ -31,6 +33,18 @@ def test_weekday_must_be_strictly_after_6pm() -> None:
     )
     assert [event.start_at.minute for event in events] == [1]
     assert report.rejected["time-window"] == 1
+
+
+def test_event_without_detail_page_overview_is_rejected() -> None:
+    raw = candidate(
+        datetime(2026, 7, 13, 19, 0, tzinfo=SGT),
+        "Organizer overview",
+    )
+    raw.metadata.clear()
+    raw.raw_text = "AI event listing card in Singapore"
+    events, report = curate_events([raw], keywords=("AI",), now=NOW, lookahead_days=90)
+    assert events == []
+    assert report.rejected == {"missing-overview": 1}
 
 
 def test_weekend_accepts_morning_and_afternoon_only() -> None:

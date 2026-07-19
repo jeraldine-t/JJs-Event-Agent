@@ -9,6 +9,7 @@ from playwright.sync_api import Page, sync_playwright
 from event_agent.config import Settings
 from event_agent.extraction import (
     extract_attendance_metrics,
+    extract_detail_page_events,
     extract_events_from_cards,
     extract_json_ld_events,
 )
@@ -88,7 +89,7 @@ class EventbriteSource:
             for url in detail_urls:
                 try:
                     page.goto(url, wait_until="domcontentloaded", timeout=45_000)
-                    structured = extract_json_ld_events(
+                    structured = extract_detail_page_events(
                         page.content(),
                         source=self.name,
                         page_url=page.url,

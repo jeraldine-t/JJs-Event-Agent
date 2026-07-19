@@ -3,7 +3,9 @@ from zoneinfo import ZoneInfo
 
 from event_agent.extraction import (
     extract_attendance_metrics,
+    extract_detail_page_events,
     extract_event_from_text,
+    extract_event_overview,
     extract_events_from_cards,
     extract_json_ld_events,
 )
@@ -38,7 +40,40 @@ def test_extracts_schema_event() -> None:
     assert events[0].start_at == datetime(2026, 7, 20, 19, 0, tzinfo=SGT)
     assert events[0].location == "LaunchPad, Singapore, 138602"
     assert events[0].price_text == "SGD 0"
+    assert events[0].metadata["structured_price"] == 0
     assert events[0].url == "https://events.example/ai-night"
+
+
+def test_extracts_luma_style_about_event_overview() -> None:
+    html = """
+    <section class="event-about-card">
+      <div>About Event</div>
+      <div><p>Build useful AI agents with experienced Singapore engineers.</p></div>
+    </section>
+    """
+    assert extract_event_overview(html) == (
+        "Build useful AI agents with experienced Singapore engineers."
+    )
+
+
+def test_detail_page_fills_missing_json_ld_description_from_overview() -> None:
+    html = """
+    <script type="application/ld+json">
+    {"@context":"https://schema.org","@type":"Event","name":"AI Night",
+     "startDate":"2026-07-20T19:00:00+08:00","location":"Singapore"}
+    </script>
+    <section class="event-about-card">
+      <div>About Event</div>
+      <div>Learn to build production AI agents with a Singapore community.</div>
+    </section>
+    """
+    event = extract_detail_page_events(
+        html, source="Lu.ma", page_url="https://luma.com/abc", timezone=SGT
+    )[0]
+    assert event.description == (
+        "Learn to build production AI agents with a Singapore community."
+    )
+    assert event.metadata["overview_source"] == "event-detail-page"
 
 
 def test_card_date_separator_preserves_time_and_clean_fields() -> None:

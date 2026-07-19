@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 from collections.abc import Iterable, Iterator
+from contextlib import suppress
 from datetime import datetime
 from typing import Any
 from urllib.parse import urljoin
@@ -58,6 +59,22 @@ WAITLIST_RE = re.compile(
 CLOSED_RE = re.compile(
     r"\b(?:registration\s+closed|not\s+currently\s+taking\s+registrations)\b",
     re.IGNORECASE,
+)
+OVERVIEW_HEADINGS = {
+    "about event",
+    "about the event",
+    "about this event",
+    "event details",
+    "event overview",
+    "overview",
+}
+OVERVIEW_SELECTORS = (
+    ".event-about-card",
+    '[data-testid="event-description"]',
+    '[data-automation="about-this-event-sc"]',
+    '[itemprop="description"]',
+    ".event-description",
+    ".event-detail-description",
 )
 
 
@@ -184,6 +201,15 @@ def _json_ld_metadata(item: dict[str, Any]) -> dict[str, Any]:
 
     offers = item.get("offers")
     values = offers if isinstance(offers, list) else [offers]
+    prices = [
+        offer.get("price", offer.get("lowPrice"))
+        for offer in values
+        if isinstance(offer, dict)
+        and offer.get("price", offer.get("lowPrice")) is not None
+    ]
+    if prices:
+        with suppress(TypeError, ValueError):
+            metadata["structured_price"] = min(float(price) for price in prices)
     availability = " ".join(
         str(offer.get("availability", ""))
         for offer in values
@@ -234,6 +260,56 @@ def extract_json_ld_events(
                 )
             )
     return found
+
+
+def extract_event_overview(html: str) -> str:
+    """Extract the organizer-written overview from a known event-detail section."""
+    soup = BeautifulSoup(html, "html.parser")
+    for selector in OVERVIEW_SELECTORS:
+        node = soup.select_one(selector)
+        if node is None:
+            continue
+        text = re.sub(r"\s+", " ", node.get_text(" ", strip=True)).strip()
+        for heading in OVERVIEW_HEADINGS:
+            if text.casefold().startswith(heading):
+                text = text[len(heading) :].lstrip(" :-–—")
+                break
+        if len(text.split()) >= 8:
+            return text[:20_000]
+
+    for node in soup.find_all(["h2", "h3", "h4", "div"]):
+        label = re.sub(r"\s+", " ", node.get_text(" ", strip=True)).strip().casefold()
+        if label not in OVERVIEW_HEADINGS:
+            continue
+        sibling = node.find_next_sibling()
+        if sibling is None:
+            continue
+        text = re.sub(r"\s+", " ", sibling.get_text(" ", strip=True)).strip()
+        if len(text.split()) >= 8:
+            return text[:20_000]
+    return ""
+
+
+def extract_detail_page_events(
+    html: str,
+    *,
+    source: str,
+    page_url: str,
+    timezone: ZoneInfo,
+) -> list[RawEvent]:
+    """Extract structured events and fill missing descriptions from the page overview."""
+    events = extract_json_ld_events(
+        html,
+        source=source,
+        page_url=page_url,
+        timezone=timezone,
+    )
+    overview = extract_event_overview(html)
+    for event in events:
+        if not event.description:
+            event.description = overview
+        event.metadata["overview_source"] = "event-detail-page"
+    return events
 
 
 def _best_title(lines: list[str]) -> str:

@@ -1,6 +1,6 @@
 # JJ's Event Agent
 
-JJ's Event Agent discovers relevant upcoming Singapore events, applies topic and timing rules, and creates a responsive calendar dashboard plus a weekly email summary.
+JJ's Event Agent discovers relevant upcoming Singapore events, applies topic and timing rules, and creates a responsive live calendar dashboard plus a weekly email summary.
 
 The dashboard is public at `https://jeraldine-t.github.io/JJs-Event-Agent/`. The repository contains code, tests, and the sanitized `index.html` only. Login cookies, `.env`, browser profiles, private links, and raw private-message bodies must never be committed or uploaded.
 
@@ -31,7 +31,7 @@ Events mentioning free food, free drinks, pizza, beer, wine, refreshments, buffe
 | Source | Adapter | Scheduled GitHub-hosted run | Authenticated/local run |
 |---|---|---|---|
 | Eventbrite | Playwright | Public Singapore search | Same search with optional account cookies |
-| Lu.ma | Playwright | Public `https://luma.com/singapore` discovery | Also account-visible and supplied private/unlisted links |
+| Lu.ma | Requests + schema.org | Public `https://luma.com/singapore` discovery plus every event overview page | Cookie-authenticated supplied private/unlisted links |
 | Meetup | Requests + BeautifulSoup | Public Singapore search | Same public search |
 | Google Developer Groups | Playwright + schema.org | Public events and Singapore chapter | Same public search |
 
@@ -39,16 +39,16 @@ Events mentioning free food, free drinks, pizza, beer, wine, refreshments, buffe
 
 ## Dashboard
 
-The dashboard opens with a full Monday-to-Sunday month grid so dates can be compared against a personal schedule before reading details. Month arrows navigate the 90-day discovery window, and compact calendar events jump to the chronological agenda. Cards include:
+The dashboard opens with a full Monday-to-Sunday month grid so dates can be compared against a personal schedule before reading details. Month arrows navigate backward or forward without an artificial end month, and compact calendar events jump to the chronological agenda. Cards include:
 
 - event name, SGT date/time, location, source, and registration link;
-- a summary of at most 99 words, derived only from the organizer-provided description;
+- a summary of at most 99 words, derived only from the organizer's event overview on the detail page;
 - the specific F&B types explicitly mentioned, or “Not stated”; and
 - number going, seats remaining, waitlist, or registration status when the source publishes it.
 
 A **Hot pick** badge appears for at least 50 people going, ten or fewer seats left, or a waitlist/full event. No attendee identities are collected.
 
-No title-, topic-, location-, or admission-derived summary text is invented. If the organizer provides no description, the dashboard says so. Private-source message bodies are never copied into the dashboard or email; those entries display a privacy availability note instead.
+No title-, topic-, location-, admission-, listing-card-, or private-message text is used to invent a summary. An event without a verified detail-page overview is excluded. Private-source message bodies are never copied into the dashboard or email.
 
 ## Public dashboard access
 
@@ -118,7 +118,7 @@ This project was developed collaboratively in Codex during OpenAI Build Week. GP
 - **Verification:** Codex added focused pytest coverage, Ruff checks, credential-history audits, live browser QA at desktop and mobile widths, and deployment verification against GitHub Pages.
 - **Security:** Codex helped keep `.env`, browser profiles, LinkedIn/Eventbrite sessions, private links, and raw private messages outside Git and outside the public Pages artifact.
 
-The human product decisions remained explicit throughout. Jeraldine chose the Singapore-only scope, topic and timing windows, acceptance of price-unstated listings, removal of Telegram, F&B and Hot Pick signals, public-dashboard/private-session boundary, real month-grid interaction, and description-only summary policy. Codex proposed implementation options and tradeoffs; Jeraldine decided what the product should do and authenticated source accounts manually when required.
+The human product decisions remained explicit throughout. Jeraldine chose the Singapore-only scope, topic and timing windows, acceptance of price-unstated listings, removal of Telegram, F&B and Hot Pick signals, public-dashboard/private-session boundary, open-ended month-grid interaction, and detail-page-overview summary policy. Codex proposed implementation options and tradeoffs; Jeraldine decided what the product should do and authenticated source accounts manually when required.
 
 The collaboration was especially valuable when requirements changed mid-build: Codex updated the shared data model, source adapters, tests, dashboard, workflow, security posture, and documentation together instead of treating each request as an isolated patch.
 
@@ -131,7 +131,7 @@ The submission draft maps the project to the official checklist and marks the tw
 
 ## GitHub Actions workflow
 
-`.github/workflows/scraper.yml` runs at Sunday 8:00 AM in `Asia/Singapore` and supports manual runs. It:
+`.github/workflows/scraper.yml` refreshes the dashboard daily at 8:00 AM in `Asia/Singapore` and supports manual runs. The email is sent only by the Sunday 8:00 AM run. It:
 
 1. installs the package and Chromium;
 2. runs Ruff and pytest;
@@ -148,7 +148,7 @@ The workflow requests `contents: write`, `pages: write`, and `id-token: write`. 
 Every supported variable is listed in `.env.example`. Common tuning values include:
 
 - `LOOKAHEAD_DAYS` and `MESSAGE_LOOKBACK_DAYS`;
-- LinkedIn profile/post caps and Eventbrite/Lu.ma/GDG event caps;
+- LinkedIn profile/post caps and Eventbrite/Lu.ma/Meetup/GDG event caps;
 - `EVENTBRITE_SEARCH_URLS` and `MEETUP_SEARCH_URLS` as pipe-separated overrides;
 - `SOURCE_FAILURE_MODE=warn|fail`; and
 - `EMAIL_ENABLED`, recipient, and SMTP transport settings.

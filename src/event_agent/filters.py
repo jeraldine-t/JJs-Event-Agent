@@ -157,6 +157,12 @@ def curate_events(
     accepted: list[Event] = []
     latest = now + timedelta(days=lookahead_days)
     for raw in raw_events:
+        if (
+            not raw.description.strip()
+            or raw.metadata.get("overview_source") != "event-detail-page"
+        ):
+            report.reject("missing-overview")
+            continue
         text = "\n".join(
             value for value in (raw.title, raw.description, raw.raw_text, raw.location) if value
         )

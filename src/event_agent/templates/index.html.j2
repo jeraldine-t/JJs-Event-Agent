@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="A date-first calendar of curated AI, tech, robotics, marketing, business, and networking events in Singapore.">
-  <title>JJs Event Agent · Singapore</title>
+  <title>JJ's Event Agent · Singapore</title>
   <style>
     :root {
       color-scheme: dark;
@@ -46,8 +46,9 @@
     }
     .eyebrow { color: var(--mint); text-transform: uppercase; letter-spacing: .15em; font-size: 10px; font-weight: 850; }
     .brand h1 { margin: 1px 0 0; font-size: clamp(19px, 2.8vw, 27px); line-height: 1.1; letter-spacing: -.035em; }
-    .count { display: flex; align-items: baseline; gap: 8px; color: var(--muted); font-size: 12px; }
-    .count strong { color: var(--lime); font-size: 26px; line-height: 1; }
+    .last-updated { color: var(--muted); text-align: right; font-size: 11px; }
+    .last-updated span { display: block; text-transform: uppercase; letter-spacing: .1em; }
+    .last-updated strong { display: block; margin-top: 2px; color: var(--text); font-size: 13px; }
     .calendar-overview {
       overflow: hidden; border: 1px solid var(--line-strong); border-radius: 26px;
       background: rgba(10, 24, 20, .9); box-shadow: var(--shadow); backdrop-filter: blur(18px);
@@ -174,7 +175,7 @@
       .shell { width: min(100% - 22px, 1280px); padding-top: 18px; }
       .app-header { align-items: flex-start; }
       .brand-mark { width: 38px; height: 38px; }
-      .count { flex-direction: column; gap: 0; align-items: end; }
+      .last-updated { max-width: 128px; }
       .calendar-heading { align-items: center; padding: 19px 18px 16px; }
       .calendar-heading p { display: none; }
       .calendar-canvas { min-width: 700px; }
@@ -198,16 +199,16 @@
     <header class="app-header">
       <div class="brand">
         <div class="brand-mark" aria-hidden="true">JJ</div>
-        <div><div class="eyebrow">Singapore · Curated event intel</div><h1>JJs Event Agent</h1></div>
+        <div><div class="eyebrow">Singapore · Curated event intel</div><h1>JJ's Event Agent</h1></div>
       </div>
-      <div class="count"><strong id="visible-count">{{ events|length }}</strong><span>events showing</span></div>
+      <div class="last-updated"><span>Last updated</span><strong>{{ generated_at }}</strong></div>
     </header>
 
     <section class="calendar-overview" aria-label="Monthly event calendar">
       <div class="calendar-heading">
         <div>
           <div class="eyebrow">Plan by date</div>
-          <h2 id="active-month-label">{{ calendar_overview[0].month_label }}</h2>
+          <h2 id="active-month-label"></h2>
           <p>See your month at a glance, then jump directly to any event’s details.</p>
         </div>
         <nav class="month-nav" aria-label="Calendar month navigation">
@@ -218,29 +219,16 @@
       <div class="month-scroll">
         <div class="calendar-canvas">
           <div class="weekday-row" aria-hidden="true"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
-          {% for month in calendar_overview %}
-          <section class="month-panel" data-month-index="{{ loop.index0 }}" data-month-label="{{ month.month_label }}"{% if not loop.first %} hidden{% endif %} aria-label="{{ month.month_label }}">
-            <div class="month-grid" role="grid">
-              {% for week in month.weeks %}
-                {% for cell in week %}
-                <div class="month-cell{% if not cell.in_month %} outside{% endif %}{% if cell.events %} has-events{% endif %}{% if cell.is_today %} is-today{% endif %}" data-date="{{ cell.date_iso }}" role="gridcell" aria-label="{{ cell.date_label }}">
-                  <time class="day-number" datetime="{{ cell.date_iso }}">{{ cell.day_number }}</time>
-                  {% for event in cell.events %}
-                  <a class="calendar-event" href="#event-{{ event.id }}" data-search="{{ (event.title ~ ' ' ~ event.summary ~ ' ' ~ event.location ~ ' ' ~ event.source ~ ' ' ~ event.perks|join(' ') ~ ' ' ~ event.keywords|join(' '))|lower }}" data-source="{{ event.source|lower }}" data-fnb-types="{{ event.fnb_perks|map('lower')|join('|') if event.has_fnb else 'not-stated' }}"><time>{{ event.compact_time_label }}</time><span>{{ event.title }}</span></a>
-                  {% endfor %}
-                </div>
-                {% endfor %}
-              {% endfor %}
-            </div>
+          <section class="month-panel" id="calendar-month-panel" aria-live="polite">
+            <div class="month-grid" id="month-grid" role="grid"></div>
           </section>
-          {% endfor %}
         </div>
       </div>
-      <div class="calendar-footer"><span>Scroll sideways on smaller screens. Click an event to jump to its full description.</span><strong id="active-month-count">{{ calendar_overview[0].event_count }} event{% if calendar_overview[0].event_count != 1 %}s{% endif %} this month</strong></div>
+      <div class="calendar-footer"><span>Navigate any month. Click an event to jump to its overview.</span><strong id="active-month-count">0 events this month</strong></div>
     </section>
 
     <div class="toolbar" aria-label="Event filters">
-      <input class="search" id="search" type="search" placeholder="Search descriptions, titles, places or perks…" aria-label="Search events">
+      <input class="search" id="search" type="search" placeholder="Search overviews, titles, places or perks…" aria-label="Search events">
       <select class="select" id="source" aria-label="Filter by source">
         <option value="">All sources</option>
         {% for option in source_options %}<option value="{{ option.value }}">{{ option.label }}</option>{% endfor %}
@@ -252,7 +240,7 @@
       </select>
     </div>
 
-    <div class="agenda-heading"><h2>Upcoming event details</h2><p>Descriptions are condensed only from organizer-provided event descriptions. No inferred summaries are generated.</p></div>
+    <div class="agenda-heading"><h2>Upcoming event details</h2><p><strong id="visible-count">{{ events|length }}</strong> matching events. Summaries are condensed from each organizer's event overview.</p></div>
     <section id="events" aria-live="polite" aria-label="Upcoming event details">
       {% for month in calendar_months %}
       <section class="agenda-month" data-month="{{ month.month_key }}">
@@ -266,7 +254,7 @@
               <div class="event-main">
                 <div class="topline"><span class="source">{{ event.source }}</span><span class="pill window">{{ event.day_type }}</span>{% if event.hot_pick %}<span class="pill hot">Hot pick</span>{% endif %}</div>
                 <h4>{{ event.title }}</h4>
-                {% if event.summary %}<p class="summary">{{ event.summary }}</p>{% else %}<p class="summary missing">{{ event.summary_note }}</p>{% endif %}
+                <p class="summary">{{ event.summary }}</p>
                 <div class="tags">
                   {% for perk in event.perks %}<span class="tag perk">{{ perk }}</span>{% endfor %}
                   {% for keyword in event.keywords %}<span class="tag">{{ keyword }}</span>{% endfor %}
@@ -290,12 +278,12 @@
       {% endfor %}
       <div class="empty" id="empty"{% if events %} hidden{% endif %}>
         <h2>No matches yet.</h2>
-        <p>{% if events %}Try a broader search or reset the source and F&amp;B filters.{% else %}The latest run found no events that met the topic, location, date, and timing filters. Check back after the next Sunday refresh.{% endif %}</p>
+        <p>{% if events %}Try a broader search or reset the source and F&amp;B filters.{% else %}The latest run found no events with a verified organizer overview that met the topic, location, date, and timing filters. Check back after the next daily refresh.{% endif %}</p>
       </div>
     </section>
 
     <details class="status-panel">
-      <summary>Run health · generated {{ generated_at }}</summary>
+      <summary>Run health · last updated {{ generated_at }}</summary>
       <div class="statuses">
         {% for status in statuses %}
         <div class="status"><b>{{ status.source }}</b><br><span class="state-{{ status.state }}">{{ status.state }}</span>{% if status.found %} · {{ status.found }} candidates{% endif %}</div>
@@ -305,6 +293,7 @@
     </details>
     <footer>Times shown in Singapore Time (SGT). F&amp;B and signup interest appear only when explicitly exposed by the source; missing data is left unstated.</footer>
   </main>
+  <script type="application/json" id="calendar-data">{{ events|tojson }}</script>
   <script>
     if (new URLSearchParams(window.location.search).has('presentation')) {
       document.body.classList.add('presentation-mode');
@@ -313,38 +302,124 @@
     const source = document.querySelector('#source');
     const fnb = document.querySelector('#fnb');
     const cards = [...document.querySelectorAll('.event-card')];
-    const calendarEvents = [...document.querySelectorAll('.calendar-event')];
-    const calendarCells = [...document.querySelectorAll('.month-cell')];
+    const calendarData = JSON.parse(document.querySelector('#calendar-data').textContent);
     const agendaDays = [...document.querySelectorAll('.calendar-day')];
     const agendaMonths = [...document.querySelectorAll('.agenda-month')];
-    const monthPanels = [...document.querySelectorAll('.month-panel')];
     const count = document.querySelector('#visible-count');
     const empty = document.querySelector('#empty');
     const monthLabel = document.querySelector('#active-month-label');
     const monthCount = document.querySelector('#active-month-count');
+    const monthPanel = document.querySelector('#calendar-month-panel');
+    const monthGrid = document.querySelector('#month-grid');
     const previousMonth = document.querySelector('#previous-month');
     const nextMonth = document.querySelector('#next-month');
-    let activeMonth = 0;
+    const [initialYear, initialMonth] = '{{ initial_month }}'.split('-').map(Number);
+    let activeYear = initialYear;
+    let activeMonth = initialMonth - 1;
 
-    function visibleCalendarEvents(panel) {
-      return [...panel.querySelectorAll('.calendar-event')].filter(event => !event.hidden).length;
+    function pad(value) {
+      return String(value).padStart(2, '0');
     }
 
-    function showMonth(index) {
-      activeMonth = Math.max(0, Math.min(index, monthPanels.length - 1));
-      monthPanels.forEach((panel, panelIndex) => { panel.hidden = panelIndex !== activeMonth; });
-      const panel = monthPanels[activeMonth];
-      const visible = visibleCalendarEvents(panel);
-      monthLabel.textContent = panel.dataset.monthLabel;
-      monthCount.textContent = `${visible} event${visible === 1 ? '' : 's'} this month`;
-      previousMonth.disabled = activeMonth === 0;
-      nextMonth.disabled = activeMonth === monthPanels.length - 1;
+    function monthName(year, month) {
+      return new Intl.DateTimeFormat('en-SG', {
+        month: 'long', year: 'numeric', timeZone: 'UTC'
+      }).format(new Date(Date.UTC(year, month, 1)));
     }
 
-    function matchesFilters(element, query, selectedSource, selectedFnb) {
-      return (!query || element.dataset.search.includes(query))
-        && (!selectedSource || element.dataset.source === selectedSource)
-        && (!selectedFnb || element.dataset.fnbTypes.split('|').includes(selectedFnb));
+    function dateLabel(year, month, day) {
+      return new Intl.DateTimeFormat('en-SG', {
+        weekday: 'long', day: '2-digit', month: 'long', year: 'numeric', timeZone: 'UTC'
+      }).format(new Date(Date.UTC(year, month, day)));
+    }
+
+    function eventSearch(event) {
+      return [event.title, event.summary, event.location, event.source,
+        ...(event.perks || []), ...(event.keywords || [])].join(' ').toLowerCase();
+    }
+
+    function matchesEvent(event, query, selectedSource, selectedFnb) {
+      const fnbTypes = event.has_fnb
+        ? event.fnb_perks.map(value => value.toLowerCase())
+        : ['not-stated'];
+      return (!query || eventSearch(event).includes(query))
+        && (!selectedSource || event.source.toLowerCase() === selectedSource)
+        && (!selectedFnb || fnbTypes.includes(selectedFnb));
+    }
+
+    function matchesCard(card, query, selectedSource, selectedFnb) {
+      return (!query || card.dataset.search.includes(query))
+        && (!selectedSource || card.dataset.source === selectedSource)
+        && (!selectedFnb || card.dataset.fnbTypes.split('|').includes(selectedFnb));
+    }
+
+    function renderMonth() {
+      const query = search.value.trim().toLowerCase();
+      const selectedSource = source.value;
+      const selectedFnb = fnb.value;
+      const firstDayOffset = (new Date(Date.UTC(activeYear, activeMonth, 1)).getUTCDay() + 6) % 7;
+      const daysInMonth = new Date(Date.UTC(activeYear, activeMonth + 1, 0)).getUTCDate();
+      const previousMonthDays = new Date(Date.UTC(activeYear, activeMonth, 0)).getUTCDate();
+      monthGrid.replaceChildren();
+      monthLabel.textContent = monthName(activeYear, activeMonth);
+      monthPanel.setAttribute('aria-label', monthLabel.textContent);
+      let visibleThisMonth = 0;
+
+      for (let index = 0; index < 42; index += 1) {
+        let cellYear = activeYear;
+        let cellMonth = activeMonth;
+        let cellDay = index - firstDayOffset + 1;
+        let inMonth = true;
+        if (cellDay < 1) {
+          inMonth = false;
+          cellMonth -= 1;
+          if (cellMonth < 0) { cellMonth = 11; cellYear -= 1; }
+          cellDay = previousMonthDays + cellDay;
+        } else if (cellDay > daysInMonth) {
+          inMonth = false;
+          cellDay -= daysInMonth;
+          cellMonth += 1;
+          if (cellMonth > 11) { cellMonth = 0; cellYear += 1; }
+        }
+        const dateIso = `${cellYear}-${pad(cellMonth + 1)}-${pad(cellDay)}`;
+        const cell = document.createElement('div');
+        cell.className = `month-cell${inMonth ? '' : ' outside'}${dateIso === '{{ generated_date }}' ? ' is-today' : ''}`;
+        cell.dataset.date = dateIso;
+        cell.setAttribute('role', 'gridcell');
+        cell.setAttribute('aria-label', dateLabel(cellYear, cellMonth, cellDay));
+        const dayNumber = document.createElement('time');
+        dayNumber.className = 'day-number';
+        dayNumber.dateTime = dateIso;
+        dayNumber.textContent = String(cellDay);
+        cell.append(dayNumber);
+
+        const dayEvents = inMonth
+          ? calendarData.filter(event => event.date_iso === dateIso
+              && matchesEvent(event, query, selectedSource, selectedFnb))
+          : [];
+        if (dayEvents.length) cell.classList.add('has-events');
+        visibleThisMonth += dayEvents.length;
+        dayEvents.forEach(event => {
+          const link = document.createElement('a');
+          link.className = 'calendar-event';
+          link.href = `#event-${event.id}`;
+          const time = document.createElement('time');
+          time.textContent = event.compact_time_label;
+          const title = document.createElement('span');
+          title.textContent = event.title;
+          link.append(time, title);
+          cell.append(link);
+        });
+        monthGrid.append(cell);
+      }
+      monthCount.textContent = `${visibleThisMonth} event${visibleThisMonth === 1 ? '' : 's'} this month`;
+    }
+
+    function moveMonth(delta) {
+      const next = new Date(Date.UTC(activeYear, activeMonth + delta, 1));
+      activeYear = next.getUTCFullYear();
+      activeMonth = next.getUTCMonth();
+      renderMonth();
     }
 
     function filterCards() {
@@ -353,16 +428,9 @@
       const selectedFnb = fnb.value;
       let visible = 0;
       cards.forEach(card => {
-        const show = matchesFilters(card, query, selectedSource, selectedFnb);
+        const show = matchesCard(card, query, selectedSource, selectedFnb);
         card.hidden = !show;
         if (show) visible += 1;
-      });
-      calendarEvents.forEach(event => {
-        event.hidden = !matchesFilters(event, query, selectedSource, selectedFnb);
-      });
-      calendarCells.forEach(cell => {
-        const hasVisible = [...cell.querySelectorAll('.calendar-event')].some(event => !event.hidden);
-        cell.classList.toggle('has-events', hasVisible);
       });
       agendaDays.forEach(day => {
         day.hidden = ![...day.querySelectorAll('.event-card')].some(card => !card.hidden);
@@ -370,21 +438,17 @@
       agendaMonths.forEach(month => {
         month.hidden = ![...month.querySelectorAll('.calendar-day')].some(day => !day.hidden);
       });
-      if (visible > 0 && visibleCalendarEvents(monthPanels[activeMonth]) === 0) {
-        const nextVisibleMonth = monthPanels.findIndex(panel => visibleCalendarEvents(panel) > 0);
-        if (nextVisibleMonth >= 0) activeMonth = nextVisibleMonth;
-      }
       count.textContent = visible;
       empty.hidden = visible !== 0;
-      showMonth(activeMonth);
+      renderMonth();
     }
 
-    previousMonth.addEventListener('click', () => showMonth(activeMonth - 1));
-    nextMonth.addEventListener('click', () => showMonth(activeMonth + 1));
+    previousMonth.addEventListener('click', () => moveMonth(-1));
+    nextMonth.addEventListener('click', () => moveMonth(1));
     search.addEventListener('input', filterCards);
     source.addEventListener('change', filterCards);
     fnb.addEventListener('change', filterCards);
-    showMonth(0);
+    renderMonth();
   </script>
 </body>
 </html>

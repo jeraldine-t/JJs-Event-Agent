@@ -3,15 +3,24 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from playwright.sync_api import Locator, Page, sync_playwright
 
 from event_agent.config import Settings
-from event_agent.extraction import extract_event_from_text
+from event_agent.extraction import extract_detail_page_events, extract_event_from_text
 from event_agent.models import RawEvent
 from event_agent.sources.base import SourceNotConfigured
 
 LOGGER = logging.getLogger(__name__)
+EVENT_DETAIL_HOSTS = (
+    "eventbrite.com",
+    "eventbrite.sg",
+    "gdg.community.dev",
+    "lu.ma",
+    "luma.com",
+    "meetup.com",
+)
 
 
 def _search_box(page: Page) -> Locator:
@@ -50,6 +59,7 @@ class WhatsAppSource:
                 viewport={"width": 1440, "height": 1000},
             )
             page = context.pages[0] if context.pages else context.new_page()
+            detail_page = context.new_page()
             page.goto("https://web.whatsapp.com", wait_until="domcontentloaded", timeout=90_000)
             page.wait_for_timeout(5_000)
             if page.locator('canvas[aria-label*="Scan"], [data-ref]').count():
@@ -79,9 +89,41 @@ class WhatsAppSource:
                             timezone=settings.timezone,
                         )
                         if event:
+                            event.description = ""
+                            hostname = (urlsplit(event.url).hostname or "").casefold()
+                            is_detail = any(
+                                hostname == host or hostname.endswith(f".{host}")
+                                for host in EVENT_DETAIL_HOSTS
+                            )
+                            if is_detail:
+                                try:
+                                    detail_page.goto(
+                                        event.url,
+                                        wait_until="domcontentloaded",
+                                        timeout=45_000,
+                                    )
+                                    structured = extract_detail_page_events(
+                                        detail_page.content(),
+                                        source=f"WhatsApp · {group}",
+                                        page_url=detail_page.url,
+                                        timezone=settings.timezone,
+                                    )
+                                    if structured:
+                                        detail = max(
+                                            structured,
+                                            key=lambda candidate: len(candidate.description),
+                                        )
+                                        detail.raw_text = event.raw_text
+                                        detail.metadata["discovered_via"] = "whatsapp"
+                                        events.append(detail)
+                                        continue
+                                except Exception as exc:
+                                    LOGGER.warning(
+                                        "WhatsApp event overview failed (%s)",
+                                        type(exc).__name__,
+                                    )
                             events.append(event)
                 except Exception as exc:
                     LOGGER.warning("WhatsApp group failed (%s): %s", group, exc)
             context.close()
         return events
-

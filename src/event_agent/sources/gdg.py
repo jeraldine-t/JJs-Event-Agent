@@ -12,8 +12,9 @@ from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from event_agent.config import Settings
 from event_agent.extraction import (
     extract_attendance_metrics,
+    extract_detail_page_events,
     extract_event_from_text,
-    extract_json_ld_events,
+    extract_event_overview,
 )
 from event_agent.models import RawEvent
 
@@ -62,7 +63,7 @@ def parse_gdg_detail(
 ) -> list[RawEvent]:
     """Parse a GDG detail page and preserve only explicit free-registration evidence."""
     body_text = BeautifulSoup(html, "html.parser").get_text("\n", strip=True)
-    events = extract_json_ld_events(
+    events = extract_detail_page_events(
         html,
         source="GDG",
         page_url=page_url,
@@ -142,6 +143,8 @@ class GDGSource:
                         location_hint="Singapore",
                     )
                     if event:
+                        event.description = extract_event_overview(html)
+                        event.metadata["overview_source"] = "event-detail-page"
                         event.price_text = _registration_price_text(
                             "\n".join((hints.get(url, ""), body_text))
                         )

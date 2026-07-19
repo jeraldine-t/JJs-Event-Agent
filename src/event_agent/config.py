@@ -59,6 +59,7 @@ class Settings:
     whatsapp_messages_per_group: int
     eventbrite_search_urls: tuple[str, ...]
     meetup_search_urls: tuple[str, ...]
+    meetup_max_events: int
     email_enabled: bool
     email_recipient: str
     smtp_host: str
@@ -109,6 +110,7 @@ class Settings:
             whatsapp_messages_per_group=_int(os.getenv("WHATSAPP_MESSAGES_PER_GROUP"), 100),
             eventbrite_search_urls=_pipes(os.getenv("EVENTBRITE_SEARCH_URLS")),
             meetup_search_urls=_pipes(os.getenv("MEETUP_SEARCH_URLS")),
+            meetup_max_events=_int(os.getenv("MEETUP_MAX_EVENTS"), 60),
             email_enabled=_bool(os.getenv("EMAIL_ENABLED"), False),
             email_recipient=os.getenv(
                 "EMAIL_RECIPIENT", "jeraldine.openai@outlook.com"
