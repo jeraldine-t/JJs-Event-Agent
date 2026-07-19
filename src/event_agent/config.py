@@ -8,10 +8,6 @@ from zoneinfo import ZoneInfo
 from dotenv import load_dotenv
 
 DEFAULT_KEYWORDS = ("AI", "Tech", "Robotics", "Marketing", "Business", "Networking")
-DEFAULT_WHATSAPP_GROUPS = (
-    "Codex Community - Main Chat",
-    "non-RWA events, programs, initiatives",
-)
 
 
 def _csv(value: str | None, default: tuple[str, ...] = ()) -> tuple[str, ...]:
@@ -106,15 +102,13 @@ class Settings:
             whatsapp_user_data_dir=(
                 whatsapp_dir if whatsapp_dir.is_absolute() else root / whatsapp_dir
             ),
-            whatsapp_groups=_pipes(os.getenv("WHATSAPP_GROUPS"), DEFAULT_WHATSAPP_GROUPS),
+            whatsapp_groups=_pipes(os.getenv("WHATSAPP_GROUPS")),
             whatsapp_messages_per_group=_int(os.getenv("WHATSAPP_MESSAGES_PER_GROUP"), 100),
             eventbrite_search_urls=_pipes(os.getenv("EVENTBRITE_SEARCH_URLS")),
             meetup_search_urls=_pipes(os.getenv("MEETUP_SEARCH_URLS")),
             meetup_max_events=_int(os.getenv("MEETUP_MAX_EVENTS"), 60),
             email_enabled=_bool(os.getenv("EMAIL_ENABLED"), False),
-            email_recipient=os.getenv(
-                "EMAIL_RECIPIENT", "jeraldine.openai@outlook.com"
-            ).strip(),
+            email_recipient=os.getenv("EMAIL_RECIPIENT", "").strip(),
             smtp_host=os.getenv("SMTP_HOST", "").strip(),
             smtp_port=_int(os.getenv("SMTP_PORT"), 587),
             smtp_security=(os.getenv("SMTP_SECURITY") or "starttls").strip().casefold(),

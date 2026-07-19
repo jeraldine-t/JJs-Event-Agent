@@ -26,7 +26,7 @@ def _event() -> Event:
 
 def _settings(tmp_path, monkeypatch) -> Settings:
     monkeypatch.setenv("EMAIL_ENABLED", "true")
-    monkeypatch.setenv("EMAIL_RECIPIENT", "jeraldine.openai@outlook.com")
+    monkeypatch.setenv("EMAIL_RECIPIENT", "recipient@example.com")
     monkeypatch.setenv("SMTP_HOST", "smtp.example.com")
     monkeypatch.setenv("SMTP_PORT", "587")
     monkeypatch.setenv("SMTP_SECURITY", "starttls")
@@ -43,7 +43,7 @@ def test_email_summary_contains_detail_page_overview(tmp_path, monkeypatch) -> N
     )
     rendered = message.get_body(preferencelist=("plain",)).get_content()
     headers = message.as_string()
-    assert "jeraldine.openai@outlook.com" in headers
+    assert "recipient@example.com" in headers
     assert "AI Builders Night" in rendered
     assert "Pizza" in rendered
     assert "75 going" in rendered
@@ -86,7 +86,7 @@ def test_email_delivery_uses_starttls_and_app_credential(tmp_path, monkeypatch) 
     assert ("connect", "smtp.example.com", 587, 30) in calls
     assert ("starttls", True) in calls
     assert ("login", "sender@example.com", "app-specific-secret") in calls
-    assert ("send", "jeraldine.openai@outlook.com") in calls
+    assert ("send", "recipient@example.com") in calls
 
 
 def test_email_is_safely_skipped_when_credentials_are_missing(tmp_path, monkeypatch) -> None:
