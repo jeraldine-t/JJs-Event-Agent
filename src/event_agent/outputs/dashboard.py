@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 from datetime import datetime
 from itertools import groupby
@@ -29,6 +30,62 @@ DEFAULT_SOURCE_OPTIONS = (
     ("meetup", "Meetup"),
     ("gdg", "Google Developer Groups"),
 )
+
+
+def _optional_int(value: object) -> int | None:
+    if value is None or value == "":
+        return None
+    return int(value)
+
+
+def load_dashboard_events(output_path: Path) -> list[Event]:
+    """Recover previously published events so the calendar remains an archive."""
+    if not output_path.exists():
+        return []
+
+    try:
+        soup = BeautifulSoup(output_path.read_text(encoding="utf-8"), "html.parser")
+        payload = soup.select_one("script#calendar-data")
+        rows = json.loads(payload.get_text() if payload else "[]")
+    except (OSError, json.JSONDecodeError):
+        return []
+
+    events: list[Event] = []
+    for row in rows if isinstance(rows, list) else []:
+        try:
+            events.append(
+                Event(
+                    source=str(row["source"]),
+                    title=str(row["title"]),
+                    description=str(row["description"]),
+                    url=str(row["url"]),
+                    start_at=datetime.fromisoformat(str(row["start_at"])),
+                    location=str(row["location"]),
+                    keywords=tuple(str(value) for value in row.get("keywords", [])),
+                    perks=tuple(str(value) for value in row.get("perks", [])),
+                    free_evidence=str(row.get("free_evidence", "")),
+                    score=int(row.get("score", 0)),
+                    end_at=(
+                        datetime.fromisoformat(str(row["end_at"]))
+                        if row.get("end_at")
+                        else None
+                    ),
+                    attendee_count=_optional_int(row.get("attendee_count")),
+                    capacity=_optional_int(row.get("capacity")),
+                    seats_left=_optional_int(row.get("seats_left")),
+                    registration_status=str(row.get("registration_status", "")),
+                )
+            )
+        except (KeyError, TypeError, ValueError):
+            continue
+    return events
+
+
+def merge_event_archive(current: list[Event], archived: list[Event]) -> list[Event]:
+    """Retain published events forever while favoring freshly scraped details."""
+    by_id = {event.event_id: event for event in archived}
+    by_id.update({event.event_id: event for event in current})
+    return sorted(by_id.values(), key=lambda event: (event.start_at, event.title.casefold()))
 
 
 def _trim_summary(text: str, limit: int = SUMMARY_WORD_LIMIT) -> str:

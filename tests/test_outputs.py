@@ -4,7 +4,11 @@ from zoneinfo import ZoneInfo
 from bs4 import BeautifulSoup
 
 from event_agent.models import Event, FilterReport, SourceStatus
-from event_agent.outputs.dashboard import render_dashboard
+from event_agent.outputs.dashboard import (
+    load_dashboard_events,
+    merge_event_archive,
+    render_dashboard,
+)
 
 SGT = ZoneInfo("Asia/Singapore")
 
@@ -92,3 +96,39 @@ def test_dashboard_shows_signup_interest_and_hot_pick(tmp_path) -> None:
     assert "Hot pick" in html
     assert "200 going" in html
     assert "Waitlist / full" in html
+
+
+def test_dashboard_events_can_be_reloaded_as_an_archive(tmp_path) -> None:
+    original = event(source="Lu.ma", description="The organizer's event overview.")
+    original.attendee_count = 223
+    output = tmp_path / "index.html"
+    render_dashboard(
+        [original],
+        [SourceStatus("Lu.ma", "ok", found=1)],
+        FilterReport(accepted=1),
+        generated_at=datetime(2026, 7, 19, 8, 0, tzinfo=SGT),
+        output_path=output,
+    )
+
+    recovered = load_dashboard_events(output)
+
+    assert len(recovered) == 1
+    assert recovered[0].event_id == original.event_id
+    assert recovered[0].description == original.description
+    assert recovered[0].attendee_count == 223
+
+
+def test_archive_retains_past_events_and_refreshes_matching_events() -> None:
+    past = event(source="Lu.ma", description="Original overview")
+    refreshed = event(source="Lu.ma", description="Updated organizer overview")
+    refreshed.attendee_count = 250
+    upcoming = event(source="GDG", description="A separate upcoming event")
+    upcoming.title = "New developer event"
+    upcoming.url = "https://example.com/new-event"
+
+    merged = merge_event_archive([refreshed, upcoming], [past])
+
+    assert len(merged) == 2
+    matching = next(item for item in merged if item.event_id == past.event_id)
+    assert matching.description == "Updated organizer overview"
+    assert matching.attendee_count == 250

@@ -41,6 +41,8 @@ Events around Mapletree Business City, Downtown, Orchard, and nearby central wor
 
 The dashboard opens with a full Monday-to-Sunday month grid so dates can be compared against a personal schedule before reading details. Month arrows navigate backward or forward without an artificial end month, and compact calendar events jump to the chronological agenda. Cards include:
 
+Previously published events remain available in their original calendar months as a permanent archive. Scheduled scrapes refresh matching event details and add newly discovered events without deleting past entries.
+
 - event name, SGT date/time, location, source, and registration link;
 - a summary of at most 99 words, derived only from the organizer's event overview on the detail page;
 - the specific F&B types explicitly mentioned, or “Not stated”; and

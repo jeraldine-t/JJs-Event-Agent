@@ -6,7 +6,11 @@ from datetime import datetime
 from event_agent.config import Settings
 from event_agent.filters import curate_events
 from event_agent.models import RawEvent, SourceStatus
-from event_agent.outputs.dashboard import render_dashboard
+from event_agent.outputs.dashboard import (
+    load_dashboard_events,
+    merge_event_archive,
+    render_dashboard,
+)
 from event_agent.outputs.email import send_email_summary
 from event_agent.sources.base import EventSource, SourceNotConfigured
 from event_agent.sources.eventbrite import EventbriteSource
@@ -54,12 +58,15 @@ def run_pipeline(settings: Settings) -> tuple[int, list[SourceStatus]]:
             LOGGER.exception("%s collection failed", source.name)
             statuses.append(SourceStatus(source.name, "failed", detail=str(exc)[:240]))
 
-    events, report = curate_events(
+    current_events, report = curate_events(
         raw_events,
         keywords=settings.keywords,
         now=now,
         lookahead_days=settings.lookahead_days,
     )
+    archived_events = load_dashboard_events(settings.output_html)
+    events = merge_event_archive(current_events, archived_events)
+    report.accepted = len(events)
     render_dashboard(
         events,
         statuses,
@@ -67,8 +74,14 @@ def run_pipeline(settings: Settings) -> tuple[int, list[SourceStatus]]:
         generated_at=now,
         output_path=settings.output_html,
     )
-    LOGGER.info("Dashboard written to %s with %d events", settings.output_html, len(events))
-    send_email_summary(events, settings, now)
+    LOGGER.info(
+        "Dashboard written to %s with %d events (%d current, %d previously published)",
+        settings.output_html,
+        len(events),
+        len(current_events),
+        len(archived_events),
+    )
+    send_email_summary(current_events, settings, now)
 
     failures = [status for status in statuses if status.state == "failed"]
     if failures and settings.source_failure_mode == "fail":
