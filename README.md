@@ -20,12 +20,10 @@ Events mentioning free food, free drinks, pizza, beer, wine, refreshments, buffe
 
 | Source | Adapter | Scheduled GitHub-hosted run | Authenticated/local run |
 |---|---|---|---|
-| LinkedIn | Playwright | Skipped because no login session is uploaded | Following network and recent followed-profile activity |
 | Eventbrite | Playwright | Public Singapore search | Same search with optional account cookies |
 | Lu.ma | Playwright | Public `https://luma.com/singapore` discovery | Also account-visible and supplied private/unlisted links |
 | Meetup | Requests + BeautifulSoup | Public Singapore search | Same public search |
 | Google Developer Groups | Playwright + schema.org | Public events and Singapore chapter | Same public search |
-| WhatsApp | Playwright persistent context | Disabled by default | The two configured groups on a trusted persistent machine |
 
 Each source is isolated. A logged-out or changed site reports a source failure while other sources continue. The workflow preserves the last populated dashboard if a scheduled scrape returns no qualifying events.
 
