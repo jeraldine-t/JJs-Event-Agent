@@ -25,10 +25,6 @@ Events mentioning free food, free drinks, pizza, beer, wine, refreshments, buffe
 | Meetup | Requests + BeautifulSoup | Public Singapore search | Same public search |
 | Google Developer Groups | Playwright + schema.org | Public events and Singapore chapter | Same public search |
 
-Each source is isolated. A logged-out or changed site reports a source failure while other sources continue. The workflow preserves the last populated dashboard if a scheduled scrape returns no qualifying events.
-
-The cloud workflow runs **once a week, every Sunday at 8:00 AM SGT**. It does not scrape daily. Authenticated LinkedIn and Eventbrite collection happens only when the agent is run on the local or trusted self-hosted machine that holds those sessions; those browser sessions are deliberately absent from GitHub.
-
 > Automated access can be limited by each platform's terms and UI changes. Use only accounts and content you are authorized to access. The project does not bypass CAPTCHAs, checkpoints, access controls, or rate limits.
 
 ## Dashboard
@@ -55,25 +51,6 @@ The Pages deployment contains only the generated `index.html` and `.nojekyll`. I
 For deployment history, use:
 
 `https://github.com/jeraldine-t/JJs-Event-Agent/actions/workflows/scraper.yml`
-
-## Weekly email summary
-
-The scheduled Sunday run attempts to email the curated list to `jeraldine.openai@outlook.com`. Manual workflow runs do not send email. Email is safely skipped until all SMTP secrets are configured.
-
-Use a mail provider that supports app-specific SMTP credentials. Do **not** store an ordinary mailbox password. Microsoft permanently removed Basic-auth SMTP client submission in Exchange Online in March 2026, so an Outlook/Microsoft 365 account password is not a supported sender credential. The recipient can still be the Outlook address; the sender may use any compatible SMTP provider.
-
-In **Settings → Secrets and variables → Actions → New repository secret**, add:
-
-| Secret | Example/purpose |
-|---|---|
-| `SMTP_HOST` | Provider SMTP hostname |
-| `SMTP_PORT` | Usually `587` for STARTTLS or `465` for implicit TLS |
-| `SMTP_SECURITY` | `starttls` or `ssl` |
-| `SMTP_USERNAME` | Provider account or SMTP username |
-| `SMTP_PASSWORD` | App-specific password/token, never the normal account password |
-| `SMTP_FROM` | Verified sender email address |
-
-GitHub encrypts Actions secrets and masks them from normal logs. The workflow never writes these values to `index.html`, Pages artifacts, commits, or source-status messages. Keep LinkedIn, Eventbrite, Lu.ma, and WhatsApp login sessions local unless you later choose a locked-down self-hosted runner.
 
 ## Local setup
 
@@ -108,19 +85,6 @@ ruff check .
 pytest
 ```
 
-## LinkedIn and Eventbrite sessions
-
-Create ignored local Playwright cookie files through the interactive helper:
-
-```bash
-python -m event_agent.bootstrap cookies linkedin
-python -m event_agent.bootstrap cookies eventbrite
-```
-
-For LinkedIn, a trusted local `.env` may instead contain `LINKEDIN_LI_AT`, or `LINKEDIN_COOKIES_JSON` may contain a Playwright-compatible cookie array. Eventbrite uses `EVENTBRITE_COOKIES_JSON` when supplied.
-
-Treat all cookie values like passwords. Never commit them, paste them into chat, include them in an artifact, or copy them into a workflow file. If a site redirects to a checkpoint, sign in again manually; the agent does not automate a checkpoint or CAPTCHA.
-
 ## Lu.ma private links
 
 `LUMA_COOKIES_JSON` accepts a Playwright-compatible array from a signed-in local Lu.ma session. `LUMA_PRIVATE_URLS` accepts comma-separated private/unlisted event links and is read in addition to the public Singapore discovery page.
@@ -134,13 +98,6 @@ Bootstrap the local persistent profile once:
 ```bash
 PLAYWRIGHT_HEADLESS=false python -m event_agent.bootstrap whatsapp --profile .state/whatsapp
 ```
-
-WhatsApp is excluded from the default schedule because GitHub-hosted runners are erased after each job. A self-hosted runner can opt in with an absolute `WHATSAPP_USER_DATA_DIR`. Never commit or upload the browser profile.
-
-The exact configured chats are:
-
-- `Codex Community - Main Chat`
-- `non-RWA events, programs, initiatives`
 
 ## GitHub Actions workflow
 
@@ -165,13 +122,3 @@ Every supported variable is listed in `.env.example`. Common tuning values inclu
 - `EVENTBRITE_SEARCH_URLS` and `MEETUP_SEARCH_URLS` as pipe-separated overrides;
 - `SOURCE_FAILURE_MODE=warn|fail`; and
 - `EMAIL_ENABLED`, recipient, and SMTP transport settings.
-
-## Troubleshooting
-
-- **Empty dashboard:** inspect the run-health panel and Actions logs. Topic, Singapore, date, timing, and explicit-paid-price filters may reject listings.
-- **LinkedIn skipped in Actions:** expected while credentials remain local; run locally or use a trusted self-hosted runner.
-- **Eventbrite challenge:** refresh the local session; access challenges are not bypassed.
-- **Lu.ma private event missing:** add its exact link locally and refresh the local cookies.
-- **Email skipped:** add all six SMTP secrets and wait for the next scheduled run; manual runs intentionally do not send.
-- **Dashboard returns 404:** confirm the latest Pages deployment succeeded and GitHub Actions is selected as the Pages source.
-- **Site selector changed:** update the isolated adapter under `src/event_agent/sources/` and its tests.
