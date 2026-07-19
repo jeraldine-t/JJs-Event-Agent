@@ -27,6 +27,7 @@ def _build_text(events: list[Event], generated_at: datetime) -> str:
 
     for event in events[:MAX_EMAIL_EVENTS]:
         row = _event_row(event)
+        description = row["summary"] or row["summary_note"]
         lines.extend(
             [
                 str(row["title"]),
@@ -35,7 +36,7 @@ def _build_text(events: list[Event], generated_at: datetime) -> str:
                 f"F&B: {row['fnb_label']}",
                 f"Interest: {row['popularity_label'] or 'Not available'}",
                 f"Source: {row['source']}",
-                f"Summary: {row['summary']}",
+                f"Description: {description}",
                 f"Register: {row['url']}",
                 "",
             ]
@@ -49,6 +50,7 @@ def _build_html(events: list[Event], generated_at: datetime) -> str:
     cards: list[str] = []
     for event in events[:MAX_EMAIL_EVENTS]:
         row = _event_row(event)
+        description = row["summary"] or row["summary_note"]
         popularity = html.escape(str(row["popularity_label"] or "Not available"))
         hot_pick = "<strong>Hot pick · </strong>" if row["hot_pick"] else ""
         cards.append(
@@ -61,7 +63,7 @@ def _build_html(events: list[Event], generated_at: datetime) -> str:
             f"<strong>F&amp;B:</strong> {html.escape(str(row['fnb_label']))}<br>"
             f"<strong>Interest:</strong> {hot_pick}{popularity}<br>"
             f"<strong>Source:</strong> {html.escape(str(row['source']))}</p>"
-            f"<p>{html.escape(str(row['summary']))}</p>"
+            f"<p>{html.escape(str(description))}</p>"
             f"<p><a href=\"{html.escape(str(row['url']), quote=True)}\">"
             "Register / view event</a></p>"
             "</article>"

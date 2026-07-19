@@ -40,14 +40,18 @@ def test_dashboard_is_self_contained_and_protects_private_source_text(tmp_path) 
     html = render(tmp_path, [event(description="Private source material must stay local.")])
     assert "AI &amp; &lt;Robotics&gt; Night" in html
     assert "Private source material" not in html
-    assert "shared through LinkedIn" in html
+    assert "No public description is displayed for this private-source event." in html
     assert html.count(">Networking<") == 1
     assert "Food &amp; beverage" in html
     assert "Pizza" in html
     assert '<option value="pizza">Pizza</option>' in html
     assert 'data-fnb-types="pizza"' in html
+    assert '<option value="lu.ma">Lu.ma · Singapore</option>' in html
     assert "July 2026" in html
     assert "Monday" in html
+    assert 'class="calendar-overview"' in html
+    assert 'class="month-grid"' in html
+    assert 'href="#event-' in html
     assert "<style>" in html and "<script>" in html
 
 
@@ -59,6 +63,17 @@ def test_public_summary_is_strictly_less_than_100_words(tmp_path) -> None:
     assert summary is not None
     assert len(summary.get_text(" ", strip=True).split()) == 99
     assert "word129" not in summary.get_text()
+
+
+def test_summary_uses_description_only_without_inferred_copy(tmp_path) -> None:
+    described = event(source="Eventbrite", description="Organizer-written agenda only.")
+    html = render(tmp_path, [described])
+    assert "Organizer-written agenda only." in html
+    assert "curated Singapore timing window" not in html
+
+    described.description = ""
+    html = render(tmp_path, [described])
+    assert "No event description was provided by the organizer." in html
 
 
 def test_dashboard_marks_fnb_as_not_stated(tmp_path) -> None:

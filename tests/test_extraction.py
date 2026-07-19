@@ -4,6 +4,7 @@ from zoneinfo import ZoneInfo
 from event_agent.extraction import (
     extract_attendance_metrics,
     extract_event_from_text,
+    extract_events_from_cards,
     extract_json_ld_events,
 )
 
@@ -67,6 +68,23 @@ def test_relative_weekday_card_keeps_afternoon_time() -> None:
     )
     assert event is not None
     assert event.start_at == datetime(2026, 7, 22, 14, 30, tzinfo=SGT)
+
+
+def test_listing_card_ui_text_is_not_used_as_an_event_description() -> None:
+    events = extract_events_from_cards(
+        [
+            {
+                "text": "AI builders night\nTue, Jul 21 • 7:00 PM\nSingapore\nFree",
+                "url": "https://example.com/event",
+            }
+        ],
+        source="Eventbrite",
+        reference_time=datetime(2026, 7, 18, 12, 0, tzinfo=SGT),
+        timezone=SGT,
+    )
+
+    assert events[0].description == ""
+    assert "AI builders night" in events[0].raw_text
 
 
 def test_extracts_luma_style_attendance_and_waitlist() -> None:

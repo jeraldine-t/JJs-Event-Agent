@@ -4,6 +4,16 @@ JJ's Event Agent discovers relevant upcoming Singapore events, applies topic and
 
 The dashboard is public at `https://jeraldine-t.github.io/JJs-Event-Agent/`. The repository contains code, tests, and the sanitized `index.html` only. Login cookies, `.env`, browser profiles, private links, and raw private-message bodies must never be committed or uploaded.
 
+## Judge quickstart
+
+- **Live demo:** https://jeraldine-t.github.io/JJs-Event-Agent/
+- **Presentation-safe demo:** https://jeraldine-t.github.io/JJs-Event-Agent/?presentation=1
+- **Repository:** https://github.com/jeraldine-t/JJs-Event-Agent
+- **License:** MIT
+- **Recommended OpenAI Build Week category:** **Apps for your life**
+
+The live demo requires no account, API key, rebuild, or test data. Use the month arrows, click a compact calendar event to jump to its detail card, and try the source and F&B filters. The presentation-safe URL hides source-brand labels for screen recording; the normal dashboard retains the complete source filter, including **Lu.ma · Singapore**.
+
 ## What qualifies
 
 An event is included only when all of these checks pass:
@@ -29,16 +39,16 @@ Events mentioning free food, free drinks, pizza, beer, wine, refreshments, buffe
 
 ## Dashboard
 
-Events are grouped chronologically by month and day. Summary tiles show F&B, weekday-evening, weekend-daytime, and networking counts. Cards include:
+The dashboard opens with a full Monday-to-Sunday month grid so dates can be compared against a personal schedule before reading details. Month arrows navigate the 90-day discovery window, and compact calendar events jump to the chronological agenda. Cards include:
 
 - event name, SGT date/time, location, source, and registration link;
-- a summary of at most 99 words;
+- a summary of at most 99 words, derived only from the organizer-provided description;
 - the specific F&B types explicitly mentioned, or “Not stated”; and
 - number going, seats remaining, waitlist, or registration status when the source publishes it.
 
 A **Hot pick** badge appears for at least 50 people going, ten or fewer seats left, or a waitlist/full event. No attendee identities are collected.
 
-Private-source message bodies are not copied into the dashboard or email. LinkedIn and WhatsApp entries use safe metadata-based summaries.
+No title-, topic-, location-, or admission-derived summary text is invented. If the organizer provides no description, the dashboard says so. Private-source message bodies are never copied into the dashboard or email; those entries display a privacy availability note instead.
 
 ## Public dashboard access
 
@@ -54,7 +64,7 @@ For deployment history, use:
 
 ## Local setup
 
-Requirements: Python 3.11+ and Chromium.
+Requirements: Python 3.11+ and Chromium. The generated dashboard supports current desktop and mobile browsers. The scraper is tested on GitHub-hosted Ubuntu and can run on macOS, Linux, or Windows anywhere Python and Playwright Chromium are supported.
 
 ```bash
 git clone https://github.com/jeraldine-t/JJs-Event-Agent.git
@@ -98,6 +108,26 @@ Bootstrap the local persistent profile once:
 ```bash
 PLAYWRIGHT_HEADLESS=false python -m event_agent.bootstrap whatsapp --profile .state/whatsapp
 ```
+
+## Built with Codex and GPT-5.6
+
+This project was developed collaboratively in Codex during OpenAI Build Week. GPT-5.6 in Codex accelerated the work from a rough automation brief into a tested, deployed product:
+
+- **Architecture:** Codex helped split each source into an isolated adapter, build a common event model, normalize SGT dates, and design fail-soft collection so one blocked site does not stop the dashboard.
+- **Implementation:** Codex produced and iterated on the Playwright/BeautifulSoup ingestion, deduplication, timing and admission filters, F&B detection, signup-capacity signals, responsive calendar, email renderer, and GitHub Actions deployment.
+- **Verification:** Codex added focused pytest coverage, Ruff checks, credential-history audits, live browser QA at desktop and mobile widths, and deployment verification against GitHub Pages.
+- **Security:** Codex helped keep `.env`, browser profiles, LinkedIn/Eventbrite sessions, private links, and raw private messages outside Git and outside the public Pages artifact.
+
+The human product decisions remained explicit throughout. Jeraldine chose the Singapore-only scope, topic and timing windows, acceptance of price-unstated listings, removal of Telegram, F&B and Hot Pick signals, public-dashboard/private-session boundary, real month-grid interaction, and description-only summary policy. Codex proposed implementation options and tradeoffs; Jeraldine decided what the product should do and authenticated source accounts manually when required.
+
+The collaboration was especially valuable when requirements changed mid-build: Codex updated the shared data model, source adapters, tests, dashboard, workflow, security posture, and documentation together instead of treating each request as an isolated patch.
+
+## OpenAI Build Week submission kit
+
+- [Devpost submission draft](docs/DEVPOST_SUBMISSION.md)
+- [Sub-three-minute demo video script](docs/DEMO_VIDEO_SCRIPT.md)
+
+The submission draft maps the project to the official checklist and marks the two entrant-only steps that cannot be automated: uploading the public YouTube video and copying the `/feedback` Codex Session ID from the task where the core functionality was built.
 
 ## GitHub Actions workflow
 

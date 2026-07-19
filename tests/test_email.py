@@ -48,7 +48,7 @@ def test_email_summary_contains_curated_fields_not_private_body(tmp_path, monkey
     assert "Pizza" in rendered
     assert "75 going" in rendered
     assert "Private LinkedIn post body" not in rendered
-    assert "shared through LinkedIn" in rendered
+    assert "No public description is displayed for this private-source event." in rendered
 
 
 def test_email_delivery_uses_starttls_and_app_credential(tmp_path, monkeypatch) -> None:

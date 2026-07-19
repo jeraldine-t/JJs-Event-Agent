@@ -113,6 +113,9 @@ class LumaSource:
                         timezone=settings.timezone,
                     )
                     if event:
+                        # Without structured data there is no reliable boundary around the
+                        # organizer's description, so do not present the full page as one.
+                        event.description = ""
                         event.metadata.update(metrics)
                         events.append(event)
                 except Exception as exc:

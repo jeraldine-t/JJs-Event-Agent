@@ -345,5 +345,8 @@ def extract_events_from_cards(
             location_hint=location_hint,
         )
         if event:
+            # Listing-card text mixes titles, dates, locations, and UI labels. It remains
+            # useful for filtering, but it is not an organizer-authored event description.
+            event.description = (card.get("description") or "").strip()
             events.append(event)
     return events
