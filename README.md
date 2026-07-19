@@ -122,13 +122,6 @@ The human product decisions remained explicit throughout. Jeraldine chose the Si
 
 The collaboration was especially valuable when requirements changed mid-build: Codex updated the shared data model, source adapters, tests, dashboard, workflow, security posture, and documentation together instead of treating each request as an isolated patch.
 
-## OpenAI Build Week submission kit
-
-- [Devpost submission draft](docs/DEVPOST_SUBMISSION.md)
-- [Sub-three-minute demo video script](docs/DEMO_VIDEO_SCRIPT.md)
-
-The submission draft maps the project to the official checklist and marks the two entrant-only steps that cannot be automated: uploading the public YouTube video and copying the `/feedback` Codex Session ID from the task where the core functionality was built.
-
 ## GitHub Actions workflow
 
 `.github/workflows/scraper.yml` refreshes the dashboard daily at 8:00 AM in `Asia/Singapore` and supports manual runs. The email is sent only by the Sunday 8:00 AM run. It:
