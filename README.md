@@ -1,6 +1,6 @@
-# JJs Event Agent
+# JJ's Event Agent
 
-JJs Event Agent discovers relevant upcoming Singapore events, applies topic and timing rules, and creates a responsive calendar dashboard plus a weekly email summary.
+JJ's Event Agent discovers relevant upcoming Singapore events, applies topic and timing rules, and creates a responsive calendar dashboard plus a weekly email summary.
 
 The dashboard is public at `https://jeraldine-t.github.io/JJs-Event-Agent/`. The repository contains code, tests, and the sanitized `index.html` only. Login cookies, `.env`, browser profiles, private links, and raw private-message bodies must never be committed or uploaded.
 
