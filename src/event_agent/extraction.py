@@ -136,9 +136,12 @@ def _walk_json(value: Any) -> Iterator[dict[str, Any]]:
 
 def _is_event_schema(item: dict[str, Any]) -> bool:
     item_type = item.get("@type")
-    if isinstance(item_type, list):
-        return any(str(value).casefold() == "event" for value in item_type)
-    return str(item_type).casefold() == "event"
+    values = item_type if isinstance(item_type, list) else [item_type]
+    return any(
+        (normalized := str(value).casefold()) == "event"
+        or normalized.endswith("event")
+        for value in values
+    )
 
 
 def _location_text(value: Any) -> str:
@@ -421,6 +424,9 @@ def extract_events_from_cards(
             location_hint=location_hint,
         )
         if event:
+            card_title = re.sub(r"\s+", " ", card.get("title", "")).strip()
+            if card_title:
+                event.title = card_title[:180]
             # Listing-card text mixes titles, dates, locations, and UI labels. It remains
             # useful for filtering, but it is not an organizer-authored event description.
             event.description = (card.get("description") or "").strip()

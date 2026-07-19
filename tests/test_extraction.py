@@ -44,6 +44,21 @@ def test_extracts_schema_event() -> None:
     assert events[0].url == "https://events.example/ai-night"
 
 
+def test_extracts_schema_event_subtype() -> None:
+    html = """
+    <script type="application/ld+json">
+    {"@context":"https://schema.org","@type":"SocialEvent","name":"AI Social",
+     "description":"An organizer overview for an AI networking evening.",
+     "startDate":"2026-07-20T19:00:00+08:00","location":"Singapore"}
+    </script>
+    """
+    events = extract_json_ld_events(
+        html, source="Eventbrite", page_url="https://example.com/event", timezone=SGT
+    )
+    assert len(events) == 1
+    assert events[0].title == "AI Social"
+
+
 def test_extracts_luma_style_about_event_overview() -> None:
     html = """
     <section class="event-about-card">

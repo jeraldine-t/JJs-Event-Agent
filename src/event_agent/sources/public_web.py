@@ -41,10 +41,12 @@ def _candidate_cards(html: str, page_url: str, host_hint: str) -> list[dict[str,
             continue
         container = anchor.find_parent(["article", "li"]) or anchor.find_parent("div") or anchor
         text = container.get_text("\n", strip=True)
+        heading = container.find(["h1", "h2", "h3", "h4"])
+        title = heading.get_text(" ", strip=True) if heading else ""
         if href in seen or len(text) < 20:
             continue
         seen.add(href)
-        cards.append({"url": href, "text": text[:6000]})
+        cards.append({"url": href, "text": text[:6000], "title": title})
     return cards
 
 
