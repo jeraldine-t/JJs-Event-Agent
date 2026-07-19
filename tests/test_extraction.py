@@ -91,6 +91,26 @@ def test_detail_page_fills_missing_json_ld_description_from_overview() -> None:
     assert event.metadata["overview_source"] == "event-detail-page"
 
 
+def test_detail_page_prefers_full_details_section_over_schema_excerpt() -> None:
+    html = """
+    <script type="application/ld+json">
+    {"@context":"https://schema.org","@type":"Event","name":"AI Night",
+     "description":"A shortened schema excerpt.",
+     "startDate":"2026-07-20T19:00:00+08:00","location":"Singapore"}
+    </script>
+    <section>
+      <div><h2>Details</h2></div>
+      <div>Build practical AI products with Singapore founders and engineers.
+      The organizer will walk through real examples and implementation choices.</div>
+    </section>
+    """
+    event = extract_detail_page_events(
+        html, source="Meetup", page_url="https://meetup.com/group/events/123", timezone=SGT
+    )[0]
+    assert event.description.startswith("Build practical AI products")
+    assert "implementation choices" in event.description
+
+
 def test_card_date_separator_preserves_time_and_clean_fields() -> None:
     event = extract_event_from_text(
         "Business Networking Singapore (Free Entry)\n"

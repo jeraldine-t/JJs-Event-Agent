@@ -64,6 +64,7 @@ OVERVIEW_HEADINGS = {
     "about event",
     "about the event",
     "about this event",
+    "details",
     "event details",
     "event overview",
     "overview",
@@ -268,15 +269,19 @@ def extract_json_ld_events(
 def extract_event_overview(html: str) -> str:
     """Extract the organizer-written overview from a known event-detail section."""
     soup = BeautifulSoup(html, "html.parser")
+
+    def cleaned_text(node: Any) -> str:
+        text = re.sub(r"\s+", " ", node.get_text(" ", strip=True)).strip()
+        for heading in OVERVIEW_HEADINGS:
+            if text.casefold().startswith(heading):
+                return text[len(heading) :].lstrip(" :-–—")
+        return text
+
     for selector in OVERVIEW_SELECTORS:
         node = soup.select_one(selector)
         if node is None:
             continue
-        text = re.sub(r"\s+", " ", node.get_text(" ", strip=True)).strip()
-        for heading in OVERVIEW_HEADINGS:
-            if text.casefold().startswith(heading):
-                text = text[len(heading) :].lstrip(" :-–—")
-                break
+        text = cleaned_text(node)
         if len(text.split()) >= 8:
             return text[:20_000]
 
@@ -284,12 +289,13 @@ def extract_event_overview(html: str) -> str:
         label = re.sub(r"\s+", " ", node.get_text(" ", strip=True)).strip().casefold()
         if label not in OVERVIEW_HEADINGS:
             continue
-        sibling = node.find_next_sibling()
-        if sibling is None:
-            continue
-        text = re.sub(r"\s+", " ", sibling.get_text(" ", strip=True)).strip()
-        if len(text.split()) >= 8:
-            return text[:20_000]
+        candidates = [node.find_next_sibling(), node.find_parent(["section", "article"])]
+        for candidate in candidates:
+            if candidate is None:
+                continue
+            text = cleaned_text(candidate)
+            if len(text.split()) >= 8:
+                return text[:20_000]
     return ""
 
 
@@ -309,7 +315,7 @@ def extract_detail_page_events(
     )
     overview = extract_event_overview(html)
     for event in events:
-        if not event.description:
+        if overview:
             event.description = overview
         event.metadata["overview_source"] = "event-detail-page"
     return events
