@@ -35,6 +35,27 @@ def test_weekday_must_be_strictly_after_6pm() -> None:
     assert report.rejected["time-window"] == 1
 
 
+def test_preferred_central_area_accepts_6pm_data_event() -> None:
+    raw = candidate(
+        datetime(2026, 8, 4, 18, 0, tzinfo=SGT),
+        "Database experts, developer tools, dinner and networking.",
+    )
+    raw.title = "ClickHouse Singapore August 2026 Edition"
+    raw.location = "10 Pasir Panjang Rd, Mapletree Business City, Singapore"
+    raw.raw_text = " ".join((raw.title, raw.description, raw.location))
+    events, report = curate_events(
+        [raw],
+        keywords=("AI", "Data", "Tech", "Product", "Design", "Marketing"),
+        now=NOW,
+        lookahead_days=90,
+    )
+    assert report.accepted == 1
+    assert events[0].keywords == ("Data", "Tech")
+    assert "Dinner" in events[0].perks
+    assert "Mapletree Business City" in events[0].location
+    assert events[0].score >= 12
+
+
 def test_event_without_detail_page_overview_is_rejected() -> None:
     raw = candidate(
         datetime(2026, 7, 13, 19, 0, tzinfo=SGT),
@@ -64,6 +85,17 @@ def test_free_food_does_not_prove_free_admission() -> None:
         datetime(2026, 7, 13, 19, 0, tzinfo=SGT),
         "Tickets from $25. Free food and beer provided.",
         price="$25",
+    )
+    events, report = curate_events([raw], keywords=("AI",), now=NOW, lookahead_days=90)
+    assert events == []
+    assert report.rejected["explicitly-paid"] == 1
+
+
+def test_member_price_is_rejected() -> None:
+    raw = candidate(
+        datetime(2026, 7, 25, 13, 0, tzinfo=SGT),
+        "AI agent workshop. SG $189 for members.",
+        price="External registration",
     )
     events, report = curate_events([raw], keywords=("AI",), now=NOW, lookahead_days=90)
     assert events == []

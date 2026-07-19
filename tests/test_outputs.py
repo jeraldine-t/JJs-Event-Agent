@@ -44,6 +44,7 @@ def test_dashboard_is_self_contained_and_calendar_is_open_ended(tmp_path) -> Non
     assert "Food &amp; beverage" in html
     assert "Pizza" in html
     assert '<option value="pizza">Pizza</option>' in html
+    assert '<option value="dinner">Dinner</option>' in html
     assert 'data-fnb-types="pizza"' in html
     assert '<option value="lu.ma">Lu.ma · Singapore</option>' in html
     assert "18 Jul 2026 · 8:00 AM SGT" in html

@@ -23,7 +23,8 @@ PRICE_LINE_RE = re.compile(
 )
 LOCATION_RE = re.compile(
     r"\b(?:singapore|sg|one[- ]north|raffles place|marina bay|orchard|bugis|"
-    r"tanjong pagar|clarke quay|suntec|jurong|paya lebar|changi)\b",
+    r"tanjong pagar|clarke quay|suntec|jurong|paya lebar|changi|mapletree business city|"
+    r"pasir panjang|downtown|cbd|city hall|dhoby ghaut|somerset|river valley)\b",
     re.IGNORECASE,
 )
 DATE_TIME_LINE_RE = re.compile(

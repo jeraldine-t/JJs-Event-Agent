@@ -7,7 +7,17 @@ from zoneinfo import ZoneInfo
 
 from dotenv import load_dotenv
 
-DEFAULT_KEYWORDS = ("AI", "Tech", "Robotics", "Marketing", "Business", "Networking")
+DEFAULT_KEYWORDS = (
+    "AI",
+    "Data",
+    "Tech",
+    "Robotics",
+    "Product",
+    "Design",
+    "Marketing",
+    "Business",
+    "Networking",
+)
 
 
 def _csv(value: str | None, default: tuple[str, ...] = ()) -> tuple[str, ...]:
@@ -48,6 +58,7 @@ class Settings:
     eventbrite_max_events: int
     gdg_max_events: int
     luma_cookies_json: str
+    luma_discovery_urls: tuple[str, ...]
     luma_private_urls: tuple[str, ...]
     luma_max_events: int
     whatsapp_user_data_dir: Path
@@ -97,6 +108,7 @@ class Settings:
             eventbrite_max_events=_int(os.getenv("EVENTBRITE_MAX_EVENTS"), 80),
             gdg_max_events=_int(os.getenv("GDG_MAX_EVENTS"), 60),
             luma_cookies_json=os.getenv("LUMA_COOKIES_JSON", "").strip(),
+            luma_discovery_urls=_pipes(os.getenv("LUMA_DISCOVERY_URLS")),
             luma_private_urls=_csv(os.getenv("LUMA_PRIVATE_URLS")),
             luma_max_events=_int(os.getenv("LUMA_MAX_EVENTS"), 80),
             whatsapp_user_data_dir=(

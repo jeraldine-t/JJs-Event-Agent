@@ -20,11 +20,15 @@ from event_agent.sources.browser_utils import parse_cookie_json
 
 LOGGER = logging.getLogger(__name__)
 PUBLIC_URL = "https://luma.com/singapore"
+CURATED_DISCOVERY_URLS = (
+    "https://luma.com/clickhouse-events?e=evt-UawcuhFBRTspfgz",
+)
 ACCOUNT_URL = "https://luma.com/home"
 RESERVED_PATHS = {
     "",
     "about",
     "calendar",
+    "clickhouse-events",
     "create",
     "discover",
     "home",
@@ -50,7 +54,8 @@ class LumaSource:
 
     def collect(self, settings: Settings) -> list[RawEvent]:
         cookies = parse_cookie_json(settings.luma_cookies_json, default_domain=".luma.com")
-        start_urls = [PUBLIC_URL, *settings.luma_private_urls]
+        discovery_urls = [PUBLIC_URL, *CURATED_DISCOVERY_URLS, *settings.luma_discovery_urls]
+        start_urls = [*discovery_urls, *settings.luma_private_urls]
         if cookies:
             start_urls.append(ACCOUNT_URL)
         now = datetime.now(settings.timezone)
@@ -74,11 +79,12 @@ class LumaSource:
                 path=cookie.get("path") or "/",
             )
 
+        discovery_url_set = set(discovery_urls)
         for url in dict.fromkeys(start_urls):
             try:
                 response = session.get(url, timeout=settings.http_timeout_seconds)
                 response.raise_for_status()
-                if _is_event_url(response.url):
+                if url not in discovery_url_set and _is_event_url(response.url):
                     event_urls.append(response.url)
                     continue
                 listing_events = extract_json_ld_events(

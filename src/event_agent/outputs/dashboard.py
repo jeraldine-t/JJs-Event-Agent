@@ -19,6 +19,7 @@ FNB_PERKS = (
     "Refreshments",
     "Buffet",
     "Light bites",
+    "Dinner",
 )
 SUMMARY_WORD_LIMIT = 99
 DEFAULT_SOURCE_OPTIONS = (

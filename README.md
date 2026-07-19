@@ -18,13 +18,13 @@ The live demo requires no account, API key, rebuild, or test data. Use the month
 
 An event is included only when all of these checks pass:
 
-- **Topic:** AI, Tech, Robotics, Marketing, Business, or Networking.
+- **Topic:** AI, data, technology, robotics, product, design, marketing, business, or networking. Related developer tooling, cloud, open-source, cybersecurity, fintech, analytics, and startup topics are included even when a listing does not use the exact category name.
 - **Location:** Singapore or a recognized Singapore area.
 - **Admission:** listings with no displayed price or explicit free admission are accepted; an explicit paid ticket price is rejected. Admission labels are intentionally omitted from the dashboard.
 - **Date:** upcoming and within `LOOKAHEAD_DAYS` (90 by default).
-- **Time:** weekdays strictly after 6:00 PM SGT, or weekends from 6:00 AM through 5:59 PM SGT.
+- **Time:** weekdays after 6:00 PM SGT, or weekends from 6:00 AM through 5:59 PM SGT. A 6:00 PM weekday start is accepted for preferred central work hubs such as Mapletree Business City, Downtown, and Orchard.
 
-Events mentioning free food, free drinks, pizza, beer, wine, refreshments, buffet, light bites, or networking receive a higher ranking. The dashboard F&B filter lists every detected type and includes “Not stated.”
+Events around Mapletree Business City, Downtown, Orchard, and nearby central work hubs receive a ranking boost. Events mentioning free food, free drinks, pizza, beer, wine, refreshments, buffet, light bites, dinner, or networking receive a higher ranking. The dashboard F&B filter lists every detected type and includes “Not stated.”
 
 ## Sources and update coverage
 
