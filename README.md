@@ -126,14 +126,14 @@ The collaboration was especially valuable when requirements changed mid-build: C
 
 ## GitHub Actions workflow
 
-`.github/workflows/scraper.yml` refreshes the dashboard daily at 8:00 AM in `Asia/Singapore` and supports manual runs. The email is sent only by the Sunday 8:00 AM run. It:
+`.github/workflows/scraper.yml` refreshes the dashboard daily at 8:00 AM in `Asia/Singapore` and supports manual runs. Email delivery is currently paused. It:
 
 1. installs the package and Chromium;
 2. runs Ruff and pytest;
 3. collects enabled sources and overwrites `index.html`;
 4. preserves the previous populated dashboard after an empty scrape;
 5. commits and pushes a changed dashboard;
-6. sends the scheduled email when SMTP secrets are configured; and
+6. keeps SMTP settings available for a future re-enable, without sending email; and
 7. uploads only `index.html` plus `.nojekyll` and deploys the public GitHub Pages site.
 
 The workflow requests `contents: write`, `pages: write`, and `id-token: write`. If repository policy restricts `GITHUB_TOKEN`, allow Actions read/write access under **Settings → Actions → General → Workflow permissions** so the dashboard commit and Pages deployment can succeed.

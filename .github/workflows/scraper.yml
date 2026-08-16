@@ -32,7 +32,8 @@ jobs:
       ENABLED_SOURCES: linkedin,eventbrite,luma,meetup,gdg
       PLAYWRIGHT_HEADLESS: "true"
       SOURCE_FAILURE_MODE: warn
-      EMAIL_ENABLED: ${{ github.event_name == 'schedule' && github.event.schedule == '0 8 * * 0' }}
+      # Email delivery is intentionally paused. Dashboard refreshes continue as scheduled.
+      EMAIL_ENABLED: "false"
       EMAIL_RECIPIENT: ${{ secrets.EMAIL_RECIPIENT }}
       SMTP_HOST: ${{ secrets.SMTP_HOST }}
       SMTP_PORT: ${{ secrets.SMTP_PORT }}
