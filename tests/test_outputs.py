@@ -121,6 +121,24 @@ def test_dashboard_events_can_be_reloaded_as_an_archive(tmp_path) -> None:
     assert recovered[0].attendee_count == 223
 
 
+def test_jump_menu_starts_at_current_month(tmp_path) -> None:
+    output = tmp_path / "index.html"
+    current_month_event = event()
+    current_month_event.start_at = datetime(2026, 8, 25, 19, 0, tzinfo=SGT)
+    render_dashboard(
+        [current_month_event],
+        [SourceStatus("Lu.ma", "ok", found=1)],
+        FilterReport(accepted=1),
+        generated_at=datetime(2026, 8, 24, 8, 0, tzinfo=SGT),
+        output_path=output,
+    )
+    soup = BeautifulSoup(output.read_text(), "html.parser")
+    values = [option.get("value") for option in soup.select("#calendar-jump option")]
+
+    assert "month:2026-07" not in values
+    assert "month:2026-08" in values
+
+
 def test_archive_retains_past_events_and_refreshes_matching_events() -> None:
     past = event(source="Lu.ma", description="Original overview")
     refreshed = event(source="Lu.ma", description="Updated organizer overview")

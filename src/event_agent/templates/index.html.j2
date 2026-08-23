@@ -215,7 +215,7 @@
         <nav class="month-nav" aria-label="Calendar month navigation">
           <select class="select jump-select" id="calendar-jump" aria-label="Jump to month or date">
             <option value="">Jump to month or date…</option>
-            {% for month in calendar_months %}
+            {% for month in calendar_months if month.month_key >= initial_month %}
             <option value="month:{{ month.month_key }}">{{ month.month_label }}</option>
             {% for day in month.days %}<option value="date:{{ day.date_key }}">↳ {{ day.date_label }}</option>{% endfor %}
             {% endfor %}
