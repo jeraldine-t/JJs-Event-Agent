@@ -102,6 +102,8 @@ pytest
 
 `LUMA_COOKIES_JSON` accepts a Playwright-compatible array from a signed-in local Lu.ma session. `LUMA_PRIVATE_URLS` accepts comma-separated private/unlisted event links and is read in addition to the public Singapore discovery page.
 
+When valid Lu.ma cookies are supplied, the daily collector also reads the account's Upcoming and Past views plus followed calendars. It labels events as personally registered, pending approval, previously attended, or followed-calendar recommendations. Personally registered or pending events can close the normal topic/time-window gap; followed-calendar recommendations still use the normal Singapore, topic, pricing, and timing filters. Private account state is never copied to the public dashboard.
+
 An unlisted URL can function as a bearer credential. Keep it in the ignored local `.env` or in a locked-down self-hosted environment, never in code, logs, or commits.
 
 ## WhatsApp persistent login
