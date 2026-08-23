@@ -31,7 +31,7 @@ Events around Mapletree Business City, Downtown, Orchard, and nearby central wor
 | Source | Adapter | Scheduled GitHub-hosted run | Authenticated/local run |
 |---|---|---|---|
 | Eventbrite | Playwright | Public Singapore search | Same search with optional account cookies |
-| Lu.ma | Requests + schema.org | Public `https://luma.com/singapore` discovery plus every event overview page | Cookie-authenticated supplied private/unlisted links |
+| Lu.ma | Requests + Playwright + schema.org | Public `https://luma.com/singapore` discovery plus every event overview page | Cookie-authenticated Upcoming/Past events, followed calendars, and private/unlisted links |
 | Meetup | Requests + BeautifulSoup | Public Singapore search | Same public search |
 | Google Developer Groups | Playwright + schema.org | Public events and Singapore chapter | Same public search |
 
@@ -47,6 +47,7 @@ Previously published events remain available in their original calendar months a
 - a summary of at most 99 words, derived only from the organizer's event overview on the detail page;
 - the specific F&B types explicitly mentioned, or “Not stated”; and
 - number going, seats remaining, waitlist, or registration status when the source publishes it.
+- Lu.ma account signals such as “Personally registered”, “Pending approval”, “Previously attended”, and “Followed calendar” when available; account-only events are still subject to safe public-field rendering.
 
 A **Hot pick** badge appears for at least 50 people going, ten or fewer seats left, or a waitlist/full event. No attendee identities are collected.
 

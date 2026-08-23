@@ -282,6 +282,7 @@
                 <h4>{{ event.title }}</h4>
                 <p class="summary">{{ event.summary }}</p>
                 <div class="tags">
+                  {% if event.personal_label %}<span class="tag">{{ event.personal_label }}</span>{% endif %}
                   {% for perk in event.perks %}<span class="tag perk">{{ perk }}</span>{% endfor %}
                   {% for keyword in event.keywords %}<span class="tag">{{ keyword }}</span>{% endfor %}
                 </div>

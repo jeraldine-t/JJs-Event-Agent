@@ -74,6 +74,7 @@ def load_dashboard_events(output_path: Path) -> list[Event]:
                     capacity=_optional_int(row.get("capacity")),
                     seats_left=_optional_int(row.get("seats_left")),
                     registration_status=str(row.get("registration_status", "")),
+                    personal_context=str(row.get("personal_context", "")),
                 )
             )
         except (KeyError, TypeError, ValueError):
@@ -143,6 +144,12 @@ def _event_row(event: Event) -> dict:
             "keywords": [
                 keyword for keyword in event.keywords if keyword not in event.perks
             ],
+            "personal_label": {
+                "going": "Personally registered",
+                "pending": "Pending approval",
+                "past": "Previously attended",
+                "calendar": "Followed calendar",
+            }.get(event.personal_context, ""),
         }
     )
     row.update(_popularity(event))

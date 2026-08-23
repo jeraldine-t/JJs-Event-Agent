@@ -56,6 +56,7 @@ class Event:
     capacity: int | None = None
     seats_left: int | None = None
     registration_status: str = ""
+    personal_context: str = ""
 
     @property
     def event_id(self) -> str:

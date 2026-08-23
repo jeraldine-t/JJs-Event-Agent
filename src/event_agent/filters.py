@@ -228,10 +228,15 @@ def curate_events(
         text = "\n".join(
             value for value in (raw.title, raw.description, raw.raw_text, raw.location) if value
         )
+        personal_context = str(raw.metadata.get("personal_context", ""))
+        personal_event = personal_context in {"going", "pending"}
         matched_keywords = _keywords(text, keywords)
         if not matched_keywords:
-            report.reject("keyword")
-            continue
+            if personal_event:
+                matched_keywords = ("Personal",)
+            else:
+                report.reject("keyword")
+                continue
         location_text = " ".join((raw.location, text))
         if not SINGAPORE_RE.search(location_text):
             report.reject("location")
@@ -248,7 +253,7 @@ def curate_events(
             report.reject("date-range")
             continue
         preferred_area = bool(PREFERRED_AREA_RE.search(location_text))
-        if not _valid_time_window(start_at, preferred_area=preferred_area):
+        if not personal_event and not _valid_time_window(start_at, preferred_area=preferred_area):
             report.reject("time-window")
             continue
         perk_text = "\n".join(
@@ -279,6 +284,7 @@ def curate_events(
                 capacity=_metric(raw, "capacity"),
                 seats_left=_metric(raw, "seats_left"),
                 registration_status=str(raw.metadata.get("registration_status", "")),
+                personal_context=personal_context,
             )
         )
 

@@ -35,6 +35,18 @@ def test_weekday_must_be_strictly_after_6pm() -> None:
     assert report.rejected["time-window"] == 1
 
 
+def test_personally_registered_event_can_close_time_and_keyword_gaps() -> None:
+    raw = candidate(
+        datetime(2026, 9, 10, 17, 0, tzinfo=SGT),
+        "Live debate and community discussion in Singapore.",
+    )
+    raw.title = "Presales Collective APJ: Will AI Replace Us?"
+    raw.metadata["personal_context"] = "going"
+    events, report = curate_events([raw], keywords=("AI",), now=NOW, lookahead_days=90)
+    assert report.accepted == 1
+    assert events[0].personal_context == "going"
+
+
 def test_preferred_central_area_accepts_6pm_data_event() -> None:
     raw = candidate(
         datetime(2026, 8, 4, 18, 0, tzinfo=SGT),

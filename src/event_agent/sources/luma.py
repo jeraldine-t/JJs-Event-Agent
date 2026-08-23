@@ -6,6 +6,7 @@ from urllib.parse import urljoin, urlsplit
 
 import requests
 from bs4 import BeautifulSoup
+from playwright.sync_api import sync_playwright
 
 from event_agent.config import Settings
 from event_agent.extraction import (
@@ -49,6 +50,68 @@ def _is_event_url(url: str) -> bool:
     return segments[0] == "event" or len(segments) == 1
 
 
+def _account_event_links(cookies: list[dict], settings: Settings) -> dict[str, str]:
+    """Read account-visible Upcoming and Past cards without exposing account data."""
+    found: dict[str, str] = {}
+    if not cookies:
+        return found
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=settings.playwright_headless)
+            context = browser.new_context(
+                locale="en-SG", timezone_id=settings.timezone_name
+            )
+            context.add_cookies(cookies)
+            page = context.new_page()
+            page.goto(ACCOUNT_URL, wait_until="domcontentloaded", timeout=60_000)
+            page.wait_for_timeout(1800)
+
+            def collect(view: str) -> None:
+                rows = page.locator('a[href]').evaluate_all(
+                    """
+                    links => links.map(link => {
+                      const href = link.href;
+                      const card = link.closest('button') || link.closest('[role=button]') || link.parentElement;
+                      return {href, text: card ? (card.innerText || '') : ''};
+                    })
+                    """
+                )
+                for row in rows:
+                    url = str(row.get("href", ""))
+                    if not _is_event_url(url):
+                        continue
+                    text = str(row.get("text", "")).casefold()
+                    if view == "past":
+                        state = "past"
+                    elif "pending" in text or "approval" in text:
+                        state = "pending"
+                    else:
+                        state = "going"
+                    key = url.rstrip("/")
+                    # Preserve stronger account signals when the same event also
+                    # appears in a followed calendar.
+                    current = found.get(key, "")
+                    priority = {"going": 4, "pending": 3, "calendar": 2, "past": 1, "": 0}
+                    if priority[state] >= priority[current]:
+                        found[key] = state
+
+            collect("upcoming")
+            past = page.get_by_role("button", name="Past", exact=True)
+            if past.count():
+                past.click()
+                page.wait_for_timeout(1200)
+                collect("past")
+            page.goto("https://luma.com/home/calendars", wait_until="domcontentloaded", timeout=60_000)
+            page.wait_for_timeout(1800)
+            collect("calendar")
+            context.close()
+            browser.close()
+    except Exception as exc:
+        LOGGER.warning("Lu.ma account discovery failed (%s)", type(exc).__name__)
+    LOGGER.info("Lu.ma account: discovered %d event links", len(found))
+    return found
+
+
 class LumaSource:
     name = "Lu.ma"
 
@@ -61,6 +124,8 @@ class LumaSource:
         now = datetime.now(settings.timezone)
         events: list[RawEvent] = []
         event_urls: list[str] = []
+        account_contexts = _account_event_links(cookies, settings)
+        event_urls.extend(account_contexts)
         session = requests.Session()
         session.headers.update(
             {
@@ -124,6 +189,9 @@ class LumaSource:
                 metrics = extract_attendance_metrics(body_text)
                 if structured:
                     for event in structured:
+                        event.metadata["personal_context"] = account_contexts.get(
+                            event.url.rstrip("/"), ""
+                        )
                         event.metadata.update(metrics)
                         event.raw_text = body_text[:20_000]
                     events.extend(structured)
@@ -139,6 +207,9 @@ class LumaSource:
                     event.description = extract_event_overview(html)
                     event.metadata["overview_source"] = "event-detail-page"
                     event.metadata.update(metrics)
+                    event.metadata["personal_context"] = account_contexts.get(
+                        event.url.rstrip("/"), ""
+                    )
                     events.append(event)
             except Exception as exc:
                 LOGGER.warning("Lu.ma event detail failed (%s)", type(exc).__name__)
