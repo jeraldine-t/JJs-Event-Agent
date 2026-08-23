@@ -14,10 +14,9 @@ fi
 if [[ -f "$stamp_path" && "$(<"$stamp_path")" == "$today" ]]; then
   exit 0
 fi
-if ! curl --fail --silent --show-error --max-time 12 https://luma.com/ >/dev/null; then
-  exit 0
-fi
-
+# The child job performs the only network work: the paired Telegram and
+# WhatsApp read-only collectors. On an offline Mac it fails without stamping
+# the day, so the online watcher retries at its next interval.
 "$repo_dir/scripts/private-refresh.sh"
 mkdir -p "$state_dir"
 printf '%s\n' "$today" >"$stamp_path"
