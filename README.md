@@ -31,7 +31,7 @@ Events around Mapletree Business City, Downtown, Orchard, and nearby central wor
 | Source | Adapter | Scheduled GitHub-hosted run | Authenticated/local run |
 |---|---|---|---|
 | Eventbrite | Playwright | Public Singapore search | Same search with optional account cookies |
-| Lu.ma | Requests + Playwright + schema.org | Public `https://luma.com/singapore` discovery plus every event overview page | Cookie-authenticated Upcoming/Past events, followed calendars, and private/unlisted links |
+| Lu.ma | Requests + Playwright + schema.org | Public Singapore discovery, official sitemap, and verified public organizer pages | Cookie-authenticated Upcoming/Past events, followed calendars, and private/unlisted links |
 | Meetup | Requests + BeautifulSoup | Public Singapore search | Same public search |
 | Google Developer Groups | Playwright + schema.org | Public events and Singapore chapter | Same public search |
 | Telegram | Local Telethon plugin + public-page verifier | Not available to GitHub-hosted runs | Four configured chats, URL-only queue |

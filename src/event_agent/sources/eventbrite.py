@@ -25,6 +25,10 @@ USER_AGENT = (
     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131 Safari/537.36"
 )
 DISCOVERY_QUERIES = ("AI", "data", "technology", "startup", "networking")
+CURATED_EVENT_URLS = (
+    "https://www.eventbrite.sg/e/headhunt-postgraduate-fair-5-sep-2026-raffles-city-tickets-1991670385738",
+    "https://www.eventbrite.sg/e/tedxntu-2026-interx-tickets-1993251862979",
+)
 
 
 def _is_event_url(url: str) -> bool:
@@ -65,11 +69,12 @@ class EventbriteSource:
     def _urls(settings: Settings) -> tuple[str, ...]:
         if settings.eventbrite_search_urls:
             return settings.eventbrite_search_urls
-        return tuple(
+        searches = tuple(
             "https://www.eventbrite.sg/d/singapore--singapore/free--events/"
             f"?q={quote_plus(query)}"
             for query in DISCOVERY_QUERIES
         )
+        return (*searches, *CURATED_EVENT_URLS)
 
     def collect(self, settings: Settings) -> list[RawEvent]:
         cookies = parse_cookie_json(

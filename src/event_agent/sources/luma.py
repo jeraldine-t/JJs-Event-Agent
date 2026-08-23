@@ -22,7 +22,12 @@ from event_agent.sources.browser_utils import parse_cookie_json
 
 LOGGER = logging.getLogger(__name__)
 PUBLIC_URL = "https://luma.com/singapore"
-CURATED_DISCOVERY_URLS = ("https://luma.com/clickhouse-events?e=evt-UawcuhFBRTspfgz",)
+CURATED_DISCOVERY_URLS = (
+    "https://luma.com/clickhouse-events?e=evt-UawcuhFBRTspfgz",
+    "https://luma.com/v4em1osl",
+    "https://luma.com/kro4jfy2",
+    "https://luma.com/sdth-2026",
+)
 SITEMAP_INDEX_URL = "https://sitemap.luma.com/sitemap.xml"
 ACCOUNT_URL = "https://luma.com/home"
 RESERVED_PATHS = {

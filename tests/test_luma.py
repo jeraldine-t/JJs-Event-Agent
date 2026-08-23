@@ -13,6 +13,7 @@ from event_agent.sources.luma import (
 
 def test_luma_singapore_is_the_public_discovery_source() -> None:
     assert PUBLIC_URL == "https://luma.com/singapore"
+    assert "https://luma.com/v4em1osl" in CURATED_DISCOVERY_URLS
 
 
 def test_luma_event_url_detection() -> None:

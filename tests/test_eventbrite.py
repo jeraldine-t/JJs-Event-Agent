@@ -2,7 +2,7 @@ from requests.cookies import RequestsCookieJar
 
 from event_agent.config import Settings
 from event_agent.sources import eventbrite
-from event_agent.sources.eventbrite import EventbriteSource, _is_event_url
+from event_agent.sources.eventbrite import CURATED_EVENT_URLS, EventbriteSource, _is_event_url
 
 
 def test_eventbrite_event_url_detection() -> None:
@@ -18,6 +18,7 @@ def test_eventbrite_uses_separate_topic_searches_by_default(tmp_path) -> None:
     assert len(urls) > 1
     assert any("q=AI" in url for url in urls)
     assert all("AI+Data+Tech" not in url for url in urls)
+    assert set(CURATED_EVENT_URLS).issubset(urls)
 
 
 def test_eventbrite_enriches_recurring_listing_date_with_detail_overview(
