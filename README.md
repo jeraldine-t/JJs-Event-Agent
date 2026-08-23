@@ -126,7 +126,7 @@ The collaboration was especially valuable when requirements changed mid-build: C
 
 ## GitHub Actions workflow
 
-`.github/workflows/scraper.yml` refreshes the dashboard daily at 8:00 AM in `Asia/Singapore` and supports manual runs. Email delivery is currently paused. It:
+`.github/workflows/scraper.yml` is currently paused: it has no scheduled trigger and only supports an intentional manual run. Email delivery is also paused. It:
 
 1. installs the package and Chromium;
 2. runs Ruff and pytest;

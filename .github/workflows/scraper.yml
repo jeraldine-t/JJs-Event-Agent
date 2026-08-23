@@ -1,11 +1,7 @@
 name: Daily event scrape and Pages deploy
 
 on:
-  schedule:
-    - cron: "0 8 * * 1-6"
-      timezone: "Asia/Singapore"
-    - cron: "0 8 * * 0"
-      timezone: "Asia/Singapore"
+  # Automation is paused while source failures are investigated.
   workflow_dispatch:
     inputs:
       refresh_data:
