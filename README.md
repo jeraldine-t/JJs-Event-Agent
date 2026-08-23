@@ -34,6 +34,8 @@ Events around Mapletree Business City, Downtown, Orchard, and nearby central wor
 | Lu.ma | Requests + Playwright + schema.org | Public `https://luma.com/singapore` discovery plus every event overview page | Cookie-authenticated Upcoming/Past events, followed calendars, and private/unlisted links |
 | Meetup | Requests + BeautifulSoup | Public Singapore search | Same public search |
 | Google Developer Groups | Playwright + schema.org | Public events and Singapore chapter | Same public search |
+| Telegram | Local Telethon plugin + public-page verifier | Not available to GitHub-hosted runs | Four configured chats, URL-only queue |
+| WhatsApp | Local paired plugin + public-page verifier | Not available to GitHub-hosted runs | Four configured groups, URL-only queue |
 
 > Automated access can be limited by each platform's terms and UI changes. Use only accounts and content you are authorized to access. The project does not bypass CAPTCHAs, checkpoints, access controls, or rate limits.
 
@@ -106,13 +108,28 @@ When valid Lu.ma cookies are supplied, the daily collector also reads the accoun
 
 An unlisted URL can function as a bearer credential. Keep it in the ignored local `.env` or in a locked-down self-hosted environment, never in code, logs, or commits.
 
-## WhatsApp persistent login
+## Local Telegram and WhatsApp ingestion
 
-Bootstrap the local persistent profile once:
+Telegram and WhatsApp run only on the paired Mac. Their local collector stores a short-lived,
+URL-only queue under `~/.local/share/jjs-event-agent`; it never writes message bodies, sender
+details, chat names, media, cookies, or account data to the repository. Each queued URL is then
+fetched without cookies and must expose a public organizer overview before it can reach the
+dashboard. The dashboard labels those cards as a verified public Telegram or WhatsApp referral,
+without identifying the originating chat.
+
+Run the local refresh with a local plugin queue command configured in
+`JJS_PRIVATE_INGEST_COMMAND`:
 
 ```bash
-PLAYWRIGHT_HEADLESS=false python -m event_agent.bootstrap whatsapp --profile .state/whatsapp
+scripts/private-refresh.sh
 ```
+
+It refreshes the queues, collects Eventbrite, Lu.ma, Meetup, GDG, Telegram, and WhatsApp,
+runs Ruff and pytest, then pushes only a changed sanitized `index.html`.
+
+The supplied macOS LaunchAgent checks every 15 minutes. It runs once for the current date as
+soon as the Mac is online after 8:00 AM SGT, so a sleeping or offline laptop does not lose that
+day's refresh. Its completion stamp and logs remain under `~/.local/share/jjs-event-agent`.
 
 ## Built with Codex and GPT-5.6
 
@@ -123,13 +140,16 @@ This project was developed collaboratively in Codex during OpenAI Build Week. GP
 - **Verification:** Codex added focused pytest coverage, Ruff checks, credential-history audits, live browser QA at desktop and mobile widths, and deployment verification against GitHub Pages.
 - **Security:** Codex helped keep `.env`, browser profiles, LinkedIn/Eventbrite sessions, private links, and raw private messages outside Git and outside the public Pages artifact.
 
-The human product decisions remained explicit throughout. Jeraldine chose the Singapore-only scope, topic and timing windows, acceptance of price-unstated listings, removal of Telegram, F&B and Hot Pick signals, public-dashboard/private-session boundary, open-ended month-grid interaction, and detail-page-overview summary policy. Codex proposed implementation options and tradeoffs; Jeraldine decided what the product should do and authenticated source accounts manually when required.
+The human product decisions remained explicit throughout. Jeraldine chose the Singapore-only scope, topic and timing windows, acceptance of price-unstated listings, F&B and Hot Pick signals, privacy-safe Telegram and WhatsApp referrals, public-dashboard/private-session boundary, open-ended month-grid interaction, and detail-page-overview summary policy. Codex proposed implementation options and tradeoffs; Jeraldine decided what the product should do and authenticated source accounts manually when required.
 
 The collaboration was especially valuable when requirements changed mid-build: Codex updated the shared data model, source adapters, tests, dashboard, workflow, security posture, and documentation together instead of treating each request as an isolated patch.
 
 ## GitHub Actions workflow
 
-`.github/workflows/scraper.yml` refreshes the dashboard daily at 8:00 AM in `Asia/Singapore` and supports manual runs. Email delivery remains paused. It:
+`.github/workflows/scraper.yml` refreshes Eventbrite, Lu.ma, Meetup, and GDG daily at 8:00 AM in
+`Asia/Singapore` and supports manual runs. LinkedIn remains local/manual. Email delivery remains
+paused. A separate local macOS runner refreshes paired Telegram and WhatsApp queues at the same
+time and can push only the sanitized dashboard. The workflow:
 
 1. installs the package and Chromium;
 2. runs Ruff and pytest;

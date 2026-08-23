@@ -25,9 +25,7 @@ def candidate(start_at: datetime, text: str, *, price: str = "Free") -> RawEvent
 
 def test_weekday_must_be_strictly_after_6pm() -> None:
     at_six = candidate(datetime(2026, 7, 13, 18, 0, tzinfo=SGT), "Free admission")
-    after_six = candidate(
-        datetime(2026, 7, 13, 18, 1, tzinfo=SGT), "Free admission and networking"
-    )
+    after_six = candidate(datetime(2026, 7, 13, 18, 1, tzinfo=SGT), "Free admission and networking")
     events, report = curate_events(
         [at_six, after_six], keywords=("AI",), now=NOW, lookahead_days=90
     )
@@ -174,9 +172,7 @@ def test_venue_name_does_not_count_as_a_provided_perk() -> None:
 
 
 def test_requires_singapore_location_and_keyword() -> None:
-    no_location = candidate(
-        datetime(2026, 7, 13, 19, 0, tzinfo=SGT), "Free AI event"
-    )
+    no_location = candidate(datetime(2026, 7, 13, 19, 0, tzinfo=SGT), "Free AI event")
     no_location.location = "Kuala Lumpur"
     no_location.description = "Free AI event in Kuala Lumpur"
     no_location.raw_text = no_location.description

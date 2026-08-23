@@ -29,6 +29,8 @@ DEFAULT_SOURCE_OPTIONS = (
     ("lu.ma", "Lu.ma · Singapore"),
     ("meetup", "Meetup"),
     ("gdg", "Google Developer Groups"),
+    ("telegram · verified public page", "Telegram · verified public page"),
+    ("whatsapp · verified public page", "WhatsApp · verified public page"),
 )
 
 
@@ -66,9 +68,7 @@ def load_dashboard_events(output_path: Path) -> list[Event]:
                     free_evidence=str(row.get("free_evidence", "")),
                     score=int(row.get("score", 0)),
                     end_at=(
-                        datetime.fromisoformat(str(row["end_at"]))
-                        if row.get("end_at")
-                        else None
+                        datetime.fromisoformat(str(row["end_at"])) if row.get("end_at") else None
                     ),
                     attendee_count=_optional_int(row.get("attendee_count")),
                     capacity=_optional_int(row.get("capacity")),
@@ -134,16 +134,12 @@ def _event_row(event: Event) -> dict:
             "date_label": event.start_at.strftime("%a, %d %b %Y"),
             "time_label": event.start_at.strftime("%-I:%M %p SGT"),
             "compact_time_label": event.start_at.strftime("%-I:%M%p").lower(),
-            "day_type": (
-                "After-work" if event.start_at.weekday() < 5 else "Weekend daytime"
-            ),
+            "day_type": ("After-work" if event.start_at.weekday() < 5 else "Weekend daytime"),
             "summary": summary,
             "fnb_perks": fnb_perks,
             "has_fnb": bool(fnb_perks),
             "fnb_label": ", ".join(fnb_perks) if fnb_perks else "Not stated",
-            "keywords": [
-                keyword for keyword in event.keywords if keyword not in event.perks
-            ],
+            "keywords": [keyword for keyword in event.keywords if keyword not in event.perks],
             "personal_label": {
                 "going": "Personally registered",
                 "pending": "Pending approval",

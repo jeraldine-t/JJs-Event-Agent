@@ -30,9 +30,8 @@ FREE_REGISTRATION_RE = re.compile(
 
 def _is_event_url(url: str) -> bool:
     parts = urlsplit(url)
-    return (
-        (parts.hostname or "").casefold() == "gdg.community.dev"
-        and parts.path.startswith("/events/details/")
+    return (parts.hostname or "").casefold() == "gdg.community.dev" and parts.path.startswith(
+        "/events/details/"
     )
 
 
@@ -97,9 +96,7 @@ class GDGSource:
                 try:
                     page.goto(listing_url, wait_until="domcontentloaded", timeout=60_000)
                     try:
-                        page.wait_for_selector(
-                            'a[href*="/events/details/"]', timeout=15_000
-                        )
+                        page.wait_for_selector('a[href*="/events/details/"]', timeout=15_000)
                     except PlaywrightTimeoutError:
                         LOGGER.warning("GDG listing rendered without event links: %s", listing_url)
                     for card in _event_cards(page):

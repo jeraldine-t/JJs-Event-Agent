@@ -114,9 +114,7 @@ class EventbriteSource:
                 if page is None:
                     playwright = sync_playwright().start()
                     stack.callback(playwright.stop)
-                    browser = playwright.chromium.launch(
-                        headless=settings.playwright_headless
-                    )
+                    browser = playwright.chromium.launch(headless=settings.playwright_headless)
                     stack.callback(browser.close)
                     context = browser.new_context(
                         locale="en-SG", timezone_id=settings.timezone_name
@@ -143,9 +141,7 @@ class EventbriteSource:
                     page_url=page_url,
                     timezone=settings.timezone,
                 )
-                event_urls.extend(
-                    event.url for event in listing_events if _is_event_url(event.url)
-                )
+                event_urls.extend(event.url for event in listing_events if _is_event_url(event.url))
                 cards = _candidate_cards(html, page_url)
                 card_events = extract_events_from_cards(
                     cards,
@@ -158,9 +154,7 @@ class EventbriteSource:
                     if not _is_event_url(event.url):
                         continue
                     event_urls.append(event.url)
-                    listing_candidates.setdefault(canonical_url(event.url), []).append(
-                        event
-                    )
+                    listing_candidates.setdefault(canonical_url(event.url), []).append(event)
 
             detail_urls = list(dict.fromkeys(canonical_url(url) for url in event_urls))[
                 : settings.eventbrite_max_events
@@ -169,9 +163,7 @@ class EventbriteSource:
             for url in detail_urls:
                 try:
                     html, page_url = fetch(url)
-                    body_text = BeautifulSoup(html, "html.parser").get_text(
-                        "\n", strip=True
-                    )
+                    body_text = BeautifulSoup(html, "html.parser").get_text("\n", strip=True)
                     structured = extract_detail_page_events(
                         html,
                         source=self.name,

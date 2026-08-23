@@ -2,9 +2,7 @@ name: Daily event scrape and Pages deploy
 
 on:
   schedule:
-    - cron: "0 8 * * 1-6"
-      timezone: "Asia/Singapore"
-    - cron: "0 8 * * 0"
+    - cron: "0 8 * * *"
       timezone: "Asia/Singapore"
   workflow_dispatch:
     inputs:
@@ -30,7 +28,8 @@ jobs:
     env:
       TIMEZONE: Asia/Singapore
       LOOKAHEAD_DAYS: "365"
-      ENABLED_SOURCES: linkedin,eventbrite,luma,meetup,gdg
+      # LinkedIn is intentionally local/manual. All other public sources refresh daily.
+      ENABLED_SOURCES: eventbrite,luma,meetup,gdg
       PLAYWRIGHT_HEADLESS: "true"
       SOURCE_FAILURE_MODE: warn
       # Email delivery remains intentionally paused. Dashboard refreshes run as scheduled.

@@ -14,4 +14,3 @@ class EventSource(Protocol):
     name: str
 
     def collect(self, settings: Settings) -> list[RawEvent]: ...
-

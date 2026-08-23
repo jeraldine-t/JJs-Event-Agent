@@ -140,8 +140,7 @@ def _is_event_schema(item: dict[str, Any]) -> bool:
     item_type = item.get("@type")
     values = item_type if isinstance(item_type, list) else [item_type]
     return any(
-        (normalized := str(value).casefold()) == "event"
-        or normalized.endswith("event")
+        (normalized := str(value).casefold()) == "event" or normalized.endswith("event")
         for value in values
     )
 
@@ -209,16 +208,13 @@ def _json_ld_metadata(item: dict[str, Any]) -> dict[str, Any]:
     prices = [
         offer.get("price", offer.get("lowPrice"))
         for offer in values
-        if isinstance(offer, dict)
-        and offer.get("price", offer.get("lowPrice")) is not None
+        if isinstance(offer, dict) and offer.get("price", offer.get("lowPrice")) is not None
     ]
     if prices:
         with suppress(TypeError, ValueError):
             metadata["structured_price"] = min(float(price) for price in prices)
     availability = " ".join(
-        str(offer.get("availability", ""))
-        for offer in values
-        if isinstance(offer, dict)
+        str(offer.get("availability", "")) for offer in values if isinstance(offer, dict)
     )
     if "soldout" in availability.replace(" ", "").casefold():
         metadata["registration_status"] = "waitlist"
@@ -245,9 +241,9 @@ def extract_json_ld_events(
             if not _is_event_schema(item):
                 continue
             title = str(item.get("name") or "Untitled event").strip()
-            description = BeautifulSoup(
-                str(item.get("description") or ""), "html.parser"
-            ).get_text(" ", strip=True)
+            description = BeautifulSoup(str(item.get("description") or ""), "html.parser").get_text(
+                " ", strip=True
+            )
             url = urljoin(page_url, str(item.get("url") or page_url))
             location = _location_text(item.get("location"))
             found.append(

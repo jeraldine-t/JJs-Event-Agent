@@ -21,9 +21,7 @@ from event_agent.sources.browser_utils import parse_cookie_json
 
 LOGGER = logging.getLogger(__name__)
 PUBLIC_URL = "https://luma.com/singapore"
-CURATED_DISCOVERY_URLS = (
-    "https://luma.com/clickhouse-events?e=evt-UawcuhFBRTspfgz",
-)
+CURATED_DISCOVERY_URLS = ("https://luma.com/clickhouse-events?e=evt-UawcuhFBRTspfgz",)
 ACCOUNT_URL = "https://luma.com/home"
 RESERVED_PATHS = {
     "",
@@ -58,20 +56,19 @@ def _account_event_links(cookies: list[dict], settings: Settings) -> dict[str, s
     try:
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=settings.playwright_headless)
-            context = browser.new_context(
-                locale="en-SG", timezone_id=settings.timezone_name
-            )
+            context = browser.new_context(locale="en-SG", timezone_id=settings.timezone_name)
             context.add_cookies(cookies)
             page = context.new_page()
             page.goto(ACCOUNT_URL, wait_until="domcontentloaded", timeout=60_000)
             page.wait_for_timeout(1800)
 
             def collect(view: str) -> None:
-                rows = page.locator('a[href]').evaluate_all(
+                rows = page.locator("a[href]").evaluate_all(
                     """
                     links => links.map(link => {
                       const href = link.href;
-                      const card = link.closest('button') || link.closest('[role=button]') || link.parentElement;
+                      const card = link.closest('button') || link.closest('[role=button]')
+                        || link.parentElement;
                       return {href, text: card ? (card.innerText || '') : ''};
                     })
                     """
@@ -101,7 +98,11 @@ def _account_event_links(cookies: list[dict], settings: Settings) -> dict[str, s
                 past.click()
                 page.wait_for_timeout(1200)
                 collect("past")
-            page.goto("https://luma.com/home/calendars", wait_until="domcontentloaded", timeout=60_000)
+            page.goto(
+                "https://luma.com/home/calendars",
+                wait_until="domcontentloaded",
+                timeout=60_000,
+            )
             page.wait_for_timeout(1800)
             collect("calendar")
             context.close()
@@ -158,16 +159,12 @@ class LumaSource:
                     page_url=response.url,
                     timezone=settings.timezone,
                 )
-                event_urls.extend(
-                    event.url for event in listing_events if _is_event_url(event.url)
-                )
+                event_urls.extend(event.url for event in listing_events if _is_event_url(event.url))
                 soup = BeautifulSoup(response.text, "html.parser")
                 event_urls.extend(
                     urljoin(response.url, str(anchor.get("href", "")))
                     for anchor in soup.select("a[href]")
-                    if _is_event_url(
-                        urljoin(response.url, str(anchor.get("href", "")))
-                    )
+                    if _is_event_url(urljoin(response.url, str(anchor.get("href", ""))))
                 )
             except Exception as exc:
                 LOGGER.warning("Lu.ma listing failed (%s)", type(exc).__name__)

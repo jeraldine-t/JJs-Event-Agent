@@ -74,6 +74,8 @@ class Settings:
     whatsapp_user_data_dir: Path
     whatsapp_groups: tuple[str, ...]
     whatsapp_messages_per_group: int
+    telegram_referral_urls_file: Path
+    whatsapp_referral_urls_file: Path
     eventbrite_search_urls: tuple[str, ...]
     meetup_search_urls: tuple[str, ...]
     meetup_max_events: int
@@ -96,6 +98,17 @@ class Settings:
         load_dotenv(root / ".env")
         output = Path(os.getenv("OUTPUT_HTML", "index.html"))
         whatsapp_dir = Path(os.getenv("WHATSAPP_USER_DATA_DIR") or ".state/whatsapp")
+        private_state_dir = Path(
+            os.getenv("JJS_PRIVATE_STATE_DIR", "~/.local/share/jjs-event-agent")
+        ).expanduser()
+        telegram_referrals = Path(
+            os.getenv("TELEGRAM_REFERRAL_URLS_FILE")
+            or private_state_dir / "telegram-referrals.json"
+        ).expanduser()
+        whatsapp_referrals = Path(
+            os.getenv("WHATSAPP_REFERRAL_URLS_FILE")
+            or private_state_dir / "whatsapp-referrals.json"
+        ).expanduser()
         return cls(
             root=root,
             timezone_name=os.getenv("TIMEZONE", "Asia/Singapore"),
@@ -126,6 +139,8 @@ class Settings:
             ),
             whatsapp_groups=_pipes(os.getenv("WHATSAPP_GROUPS")),
             whatsapp_messages_per_group=_int(os.getenv("WHATSAPP_MESSAGES_PER_GROUP"), 100),
+            telegram_referral_urls_file=telegram_referrals,
+            whatsapp_referral_urls_file=whatsapp_referrals,
             eventbrite_search_urls=_pipes(os.getenv("EVENTBRITE_SEARCH_URLS")),
             meetup_search_urls=_pipes(os.getenv("MEETUP_SEARCH_URLS")),
             meetup_max_events=_int(os.getenv("MEETUP_MAX_EVENTS"), 60),

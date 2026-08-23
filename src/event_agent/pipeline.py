@@ -18,19 +18,24 @@ from event_agent.sources.gdg import GDGSource
 from event_agent.sources.linkedin import LinkedInSource
 from event_agent.sources.luma import LumaSource
 from event_agent.sources.public_web import MeetupSource
-from event_agent.sources.whatsapp import WhatsAppSource
+from event_agent.sources.referrals import PublicReferralSource
 
 LOGGER = logging.getLogger(__name__)
 
 
-def _sources() -> dict[str, EventSource]:
+def _sources(settings: Settings) -> dict[str, EventSource]:
     return {
         "linkedin": LinkedInSource(),
         "luma": LumaSource(),
         "eventbrite": EventbriteSource(),
         "gdg": GDGSource(),
         "meetup": MeetupSource(),
-        "whatsapp": WhatsAppSource(),
+        "telegram": PublicReferralSource(
+            "Telegram · verified public page", settings.telegram_referral_urls_file
+        ),
+        "whatsapp": PublicReferralSource(
+            "WhatsApp · verified public page", settings.whatsapp_referral_urls_file
+        ),
     }
 
 
@@ -38,13 +43,11 @@ def run_pipeline(settings: Settings) -> tuple[int, list[SourceStatus]]:
     now = datetime.now(settings.timezone)
     raw_events: list[RawEvent] = []
     statuses: list[SourceStatus] = []
-    registry = _sources()
+    registry = _sources(settings)
     for configured_name in settings.enabled_sources:
         source = registry.get(configured_name.casefold())
         if source is None:
-            statuses.append(
-                SourceStatus(configured_name, "failed", detail="unknown source name")
-            )
+            statuses.append(SourceStatus(configured_name, "failed", detail="unknown source name"))
             continue
         LOGGER.info("Collecting from %s", source.name)
         try:

@@ -102,7 +102,5 @@ def test_luma_follows_curated_calendar_to_singapore_event(tmp_path, monkeypatch)
     monkeypatch.setattr(luma.requests, "Session", FakeSession)
     settings = Settings.from_env(tmp_path)
     events = LumaSource().collect(settings)
-    assert [event.title for event in events] == [
-        "ClickHouse Singapore August 2026 Edition"
-    ]
+    assert [event.title for event in events] == ["ClickHouse Singapore August 2026 Edition"]
     assert events[0].metadata["structured_price"] == 0

@@ -34,4 +34,3 @@ def parse_cookie_json(raw: str, *, default_domain: str) -> list[dict[str, Any]]:
             cookie.pop("sameSite", None)
         cookies.append(cookie)
     return cookies
-

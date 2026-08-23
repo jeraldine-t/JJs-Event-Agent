@@ -3,6 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07110f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="description" content="A date-first calendar of curated AI, tech, robotics, marketing, business, and networking events in Singapore.">
   <title>JJ's Event Agent · Singapore</title>
   <style>
@@ -34,6 +37,7 @@
         var(--bg);
       font: 15px/1.55 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
+    button, a, select, input { -webkit-tap-highlight-color: transparent; }
     a { color: inherit; }
     button, input, select { font: inherit; }
     .shell { width: min(1280px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 80px; }
@@ -167,6 +171,7 @@
     footer { margin-top: 24px; color: var(--muted); font-size: 12px; }
     .presentation-mode .source, .presentation-mode #source { display: none; }
     .presentation-mode .toolbar { grid-template-columns: minmax(220px, 1fr) 220px; }
+    .mobile-nav { display: none; }
     [hidden] { display: none !important; }
     @media (max-width: 880px) {
       .toolbar { grid-template-columns: 1fr 1fr; }
@@ -175,7 +180,8 @@
       .event-side { padding: 16px 0 0; border-left: 0; border-top: 1px solid var(--line); }
     }
     @media (max-width: 620px) {
-      .shell { width: min(100% - 22px, 1280px); padding-top: 18px; }
+      body { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+      .shell { width: min(100% - 22px, 1280px); padding-top: max(18px, env(safe-area-inset-top)); }
       .app-header { align-items: flex-start; }
       .brand-mark { width: 38px; height: 38px; }
       .last-updated { max-width: 128px; }
@@ -193,7 +199,7 @@
       .calendar-event span { display: block; }
       .calendar-footer { align-items: flex-start; }
       .calendar-footer span:first-child { max-width: 210px; }
-      .toolbar { grid-template-columns: 1fr; }
+      .toolbar { grid-template-columns: 1fr; top: 8px; margin: 14px 0 26px; border-radius: 16px; }
       .presentation-mode .toolbar { grid-template-columns: 1fr; }
       .search { grid-column: auto; }
       .agenda-heading { align-items: start; flex-direction: column; }
@@ -204,6 +210,18 @@
       .event-card { padding: 16px; border-radius: 18px; }
       .event-card h4 { margin-top: 11px; font-size: 21px; }
       .summary { font-size: 14px; }
+      .register { min-height: 44px; }
+      .mobile-nav {
+        position: fixed; right: 10px; bottom: max(10px, env(safe-area-inset-bottom)); left: 10px; z-index: 20;
+        display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 7px;
+        border: 1px solid var(--line-strong); border-radius: 19px; background: rgba(8, 19, 16, .94);
+        box-shadow: 0 16px 42px rgba(0, 0, 0, .42); backdrop-filter: blur(20px);
+      }
+      .mobile-nav a, .mobile-nav button {
+        display: grid; min-height: 44px; place-items: center; border: 0; border-radius: 13px;
+        color: var(--text); background: transparent; font-weight: 800; font-size: 12px; text-decoration: none;
+      }
+      .mobile-nav a:active, .mobile-nav button:active { color: #102018; background: var(--lime); }
     }
   </style>
 </head>
@@ -217,7 +235,7 @@
       <div class="last-updated"><span>Last updated</span><strong>{{ generated_at }}</strong></div>
     </header>
 
-    <section class="calendar-overview" aria-label="Monthly event calendar">
+    <section class="calendar-overview" id="calendar" aria-label="Monthly event calendar">
       <div class="calendar-heading">
         <div>
           <div class="eyebrow">Plan by date</div>
@@ -253,7 +271,7 @@
       <div class="calendar-footer"><span>Navigate any month. Click an event to jump to its overview.</span><strong id="active-month-count">0 events this month</strong></div>
     </section>
 
-    <div class="toolbar" aria-label="Event filters">
+    <div class="toolbar" id="filters" aria-label="Event filters">
       <input class="search" id="search" type="search" placeholder="Search overviews, titles, places or perks…" aria-label="Search events">
       <select class="select" id="source" aria-label="Filter by source">
         <option value="">All sources</option>
@@ -266,7 +284,7 @@
       </select>
     </div>
 
-    <div class="agenda-heading"><h2>Upcoming event details</h2><p><strong id="visible-count">{{ events|length }}</strong> matching events. Summaries are condensed from each organizer's event overview.</p></div>
+    <div class="agenda-heading" id="agenda"><h2>Upcoming event details</h2><p><strong id="visible-count">{{ events|length }}</strong> matching events. Summaries are condensed from each organizer's event overview.</p></div>
     <section id="events" aria-live="polite" aria-label="Upcoming event details">
       {% for month in calendar_months %}
       <section class="agenda-month" data-month="{{ month.month_key }}">
@@ -320,6 +338,11 @@
     </details>
     <footer>Times shown in Singapore Time (SGT). F&amp;B and signup interest appear only when explicitly exposed by the source; missing data is left unstated.</footer>
   </main>
+  <nav class="mobile-nav" aria-label="Quick navigation">
+    <a href="#calendar">Calendar</a>
+    <a href="#agenda">Agenda</a>
+    <button type="button" id="open-filters">Filters</button>
+  </nav>
   <script type="application/json" id="calendar-data">{{ events|tojson }}</script>
   <script>
     if (new URLSearchParams(window.location.search).has('presentation')) {
@@ -490,6 +513,10 @@
     search.addEventListener('input', filterCards);
     source.addEventListener('change', filterCards);
     fnb.addEventListener('change', filterCards);
+    document.querySelector('#open-filters').addEventListener('click', () => {
+      document.querySelector('#filters').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      window.setTimeout(() => search.focus({ preventScroll: true }), 350);
+    });
     renderMonth();
   </script>
 </body>

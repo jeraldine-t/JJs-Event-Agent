@@ -14,4 +14,3 @@ def test_parses_base64_cookie_array() -> None:
     raw = base64.b64encode(b'[{"name":"session","value":"secret"}]').decode()
     cookies = parse_cookie_json(raw, default_domain=".example.com")
     assert cookies[0]["domain"] == ".example.com"
-

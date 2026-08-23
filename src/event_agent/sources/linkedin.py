@@ -51,9 +51,7 @@ class LinkedInSource:
         if not settings.linkedin_li_at and not settings.linkedin_cookies_json:
             raise SourceNotConfigured("set LINKEDIN_LI_AT or LINKEDIN_COOKIES_JSON")
 
-        cookies = parse_cookie_json(
-            settings.linkedin_cookies_json, default_domain=".linkedin.com"
-        )
+        cookies = parse_cookie_json(settings.linkedin_cookies_json, default_domain=".linkedin.com")
         if settings.linkedin_li_at:
             cookies.append(
                 {
@@ -87,13 +85,9 @@ class LinkedInSource:
             for profile in profiles:
                 activity_url = f"{profile}/recent-activity/all/"
                 try:
-                    page.goto(
-                        activity_url, wait_until="domcontentloaded", timeout=45_000
-                    )
+                    page.goto(activity_url, wait_until="domcontentloaded", timeout=45_000)
                     _scroll(page, rounds=2)
-                    posts = page.locator(
-                        ".feed-shared-update-v2, article, .occludable-update"
-                    )
+                    posts = page.locator(".feed-shared-update-v2, article, .occludable-update")
                     for index in range(min(posts.count(), settings.linkedin_posts_per_profile)):
                         post = posts.nth(index)
                         text = post.inner_text(timeout=5_000).strip()

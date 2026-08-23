@@ -54,9 +54,9 @@ def _build_html(events: list[Event], generated_at: datetime) -> str:
         popularity = html.escape(str(row["popularity_label"] or "Not available"))
         hot_pick = "<strong>Hot pick · </strong>" if row["hot_pick"] else ""
         cards.append(
-            "<article style=\"margin:0 0 16px;padding:16px;border:1px solid #d9e2ea;"
-            "border-radius:12px;background:#fff\">"
-            f"<h2 style=\"margin:0 0 8px;font-size:18px\">{html.escape(str(row['title']))}</h2>"
+            '<article style="margin:0 0 16px;padding:16px;border:1px solid #d9e2ea;'
+            'border-radius:12px;background:#fff">'
+            f'<h2 style="margin:0 0 8px;font-size:18px">{html.escape(str(row["title"]))}</h2>'
             f"<p><strong>When:</strong> {html.escape(str(row['date_label']))} at "
             f"{html.escape(str(row['time_label']))}<br>"
             f"<strong>Where:</strong> {html.escape(str(row['location']))}<br>"
@@ -64,7 +64,7 @@ def _build_html(events: list[Event], generated_at: datetime) -> str:
             f"<strong>Interest:</strong> {hot_pick}{popularity}<br>"
             f"<strong>Source:</strong> {html.escape(str(row['source']))}</p>"
             f"<p>{html.escape(str(overview))}</p>"
-            f"<p><a href=\"{html.escape(str(row['url']), quote=True)}\">"
+            f'<p><a href="{html.escape(str(row["url"]), quote=True)}">'
             "Register / view event</a></p>"
             "</article>"
         )
@@ -76,9 +76,9 @@ def _build_html(events: list[Event], generated_at: datetime) -> str:
     if len(events) > MAX_EMAIL_EVENTS:
         extra = f"<p>Plus {len(events) - MAX_EMAIL_EVENTS} more event(s) in the dashboard.</p>"
     return (
-        "<!doctype html><html><body style=\"margin:0;background:#f4f7f9;color:#17212b;"
-        "font-family:Arial,sans-serif\"><main style=\"max-width:680px;margin:auto;padding:24px\">"
-        "<h1 style=\"margin-bottom:4px\">JJ's Event Agent</h1>"
+        '<!doctype html><html><body style="margin:0;background:#f4f7f9;color:#17212b;'
+        'font-family:Arial,sans-serif"><main style="max-width:680px;margin:auto;padding:24px">'
+        '<h1 style="margin-bottom:4px">JJ\'s Event Agent</h1>'
         f"<p>Found {len(events)} upcoming Singapore event(s). Updated "
         f"{generated_at:%d %b %Y, %-I:%M %p} SGT.</p>{''.join(cards)}{extra}</main></body></html>"
     )
@@ -90,8 +90,7 @@ def build_email_summary(
     sender = settings.smtp_from or settings.smtp_username
     message = EmailMessage()
     message["Subject"] = (
-        f"JJ's Event Agent: {len(events)} upcoming Singapore event"
-        f"{'s' if len(events) != 1 else ''}"
+        f"JJ's Event Agent: {len(events)} upcoming Singapore event{'s' if len(events) != 1 else ''}"
     )
     message["From"] = sender
     message["To"] = settings.email_recipient
@@ -100,9 +99,7 @@ def build_email_summary(
     return message
 
 
-def send_email_summary(
-    events: list[Event], settings: Settings, generated_at: datetime
-) -> bool:
+def send_email_summary(events: list[Event], settings: Settings, generated_at: datetime) -> bool:
     if not settings.email_enabled:
         return False
 

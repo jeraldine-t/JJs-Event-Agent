@@ -85,9 +85,7 @@ def test_detail_page_fills_missing_json_ld_description_from_overview() -> None:
     event = extract_detail_page_events(
         html, source="Lu.ma", page_url="https://luma.com/abc", timezone=SGT
     )[0]
-    assert event.description == (
-        "Learn to build production AI agents with a Singapore community."
-    )
+    assert event.description == ("Learn to build production AI agents with a Singapore community.")
     assert event.metadata["overview_source"] == "event-detail-page"
 
 

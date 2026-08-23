@@ -92,9 +92,7 @@ class MeetupSource:
                 timezone=settings.timezone,
                 location_hint="Singapore",
             )
-            event_urls.extend(
-                event.url for event in card_events if _is_meetup_event_url(event.url)
-            )
+            event_urls.extend(event.url for event in card_events if _is_meetup_event_url(event.url))
 
         detail_urls = list(dict.fromkeys(event_urls))[: settings.meetup_max_events]
         LOGGER.info("Meetup: inspecting %d event detail pages", len(detail_urls))
@@ -102,9 +100,7 @@ class MeetupSource:
             try:
                 response = session.get(url, timeout=settings.http_timeout_seconds)
                 response.raise_for_status()
-                body_text = BeautifulSoup(response.text, "html.parser").get_text(
-                    "\n", strip=True
-                )
+                body_text = BeautifulSoup(response.text, "html.parser").get_text("\n", strip=True)
                 structured = extract_detail_page_events(
                     response.text,
                     source=self.name,

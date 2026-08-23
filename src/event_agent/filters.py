@@ -119,9 +119,7 @@ def _keywords(text: str, configured: tuple[str, ...]) -> tuple[str, ...]:
     for keyword in configured:
         pattern = KEYWORD_PATTERNS.get(keyword)
         known_match = bool(pattern and pattern.search(text))
-        custom_match = bool(
-            not pattern and re.search(rf"\b{re.escape(keyword)}\b", text, re.I)
-        )
+        custom_match = bool(not pattern and re.search(rf"\b{re.escape(keyword)}\b", text, re.I))
         if known_match or custom_match:
             result.append(keyword)
     return tuple(result)
@@ -202,8 +200,7 @@ def _dedupe_key(event: Event) -> tuple[str, str]:
 
 def _event_quality(event: Event) -> tuple[int, int, int]:
     metrics = sum(
-        value is not None
-        for value in (event.attendee_count, event.capacity, event.seats_left)
+        value is not None for value in (event.attendee_count, event.capacity, event.seats_left)
     )
     return (event.score, metrics, len(event.description))
 
