@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from datetime import datetime
 from urllib.parse import urljoin, urlsplit
 
@@ -22,6 +23,7 @@ from event_agent.sources.browser_utils import parse_cookie_json
 LOGGER = logging.getLogger(__name__)
 PUBLIC_URL = "https://luma.com/singapore"
 CURATED_DISCOVERY_URLS = ("https://luma.com/clickhouse-events?e=evt-UawcuhFBRTspfgz",)
+SITEMAP_INDEX_URL = "https://sitemap.luma.com/sitemap.xml"
 ACCOUNT_URL = "https://luma.com/home"
 RESERVED_PATHS = {
     "",
@@ -46,6 +48,37 @@ def _is_event_url(url: str) -> bool:
     if not segments or segments[0] in RESERVED_PATHS:
         return False
     return segments[0] == "event" or len(segments) == 1
+
+
+def _sitemap_locations(xml: str) -> list[str]:
+    return re.findall(r"<loc>\s*(https?://[^<]+)\s*</loc>", xml or "")
+
+
+def _sitemap_event_urls(session: requests.Session, settings: Settings) -> list[str]:
+    """Discover recently updated public Lu.ma event pages beyond the city-page cap."""
+    if settings.luma_sitemap_max_events <= 0:
+        return []
+    try:
+        index = session.get(SITEMAP_INDEX_URL, timeout=settings.http_timeout_seconds)
+        index.raise_for_status()
+        sitemap_urls = _sitemap_locations(index.text)
+    except Exception as exc:
+        LOGGER.warning("Lu.ma sitemap index failed (%s)", type(exc).__name__)
+        return []
+
+    event_urls: list[str] = []
+    for sitemap_url in sitemap_urls:
+        try:
+            response = session.get(sitemap_url, timeout=settings.http_timeout_seconds)
+            response.raise_for_status()
+            event_urls.extend(
+                url for url in _sitemap_locations(response.text) if _is_event_url(url)
+            )
+            if len(event_urls) >= settings.luma_sitemap_max_events:
+                break
+        except Exception as exc:
+            LOGGER.warning("Lu.ma sitemap page failed (%s)", type(exc).__name__)
+    return list(dict.fromkeys(event_urls))[: settings.luma_sitemap_max_events]
 
 
 def _account_event_links(cookies: list[dict], settings: Settings) -> dict[str, str]:
@@ -126,7 +159,6 @@ class LumaSource:
         events: list[RawEvent] = []
         event_urls: list[str] = []
         account_contexts = _account_event_links(cookies, settings)
-        event_urls.extend(account_contexts)
         session = requests.Session()
         session.headers.update(
             {
@@ -144,6 +176,8 @@ class LumaSource:
                 domain=cookie.get("domain") or ".luma.com",
                 path=cookie.get("path") or "/",
             )
+
+        event_urls.extend(account_contexts)
 
         discovery_url_set = set(discovery_urls)
         for url in dict.fromkeys(start_urls):
@@ -168,6 +202,12 @@ class LumaSource:
                 )
             except Exception as exc:
                 LOGGER.warning("Lu.ma listing failed (%s)", type(exc).__name__)
+
+        # The city discovery page is intentionally small. The official sitemap
+        # adds recently updated public events, which are still filtered for
+        # Singapore, topic, price, date, and timing before publication. Put it
+        # after account and city results so a rate limit cannot crowd them out.
+        event_urls.extend(_sitemap_event_urls(session, settings))
 
         unique_urls = list(dict.fromkeys(event_urls))[: settings.luma_max_events]
         LOGGER.info("Lu.ma: inspecting %d event detail pages", len(unique_urls))
@@ -208,6 +248,12 @@ class LumaSource:
                         event.url.rstrip("/"), ""
                     )
                     events.append(event)
+            except requests.HTTPError as exc:
+                response = exc.response
+                if response is not None and response.status_code == 429:
+                    LOGGER.warning("Lu.ma rate limited detail collection; stopping this run")
+                    break
+                LOGGER.warning("Lu.ma event detail failed (HTTPError)")
             except Exception as exc:
                 LOGGER.warning("Lu.ma event detail failed (%s)", type(exc).__name__)
         return events

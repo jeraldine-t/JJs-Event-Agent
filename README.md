@@ -124,8 +124,9 @@ Run the local refresh with a local plugin queue command configured in
 scripts/private-refresh.sh
 ```
 
-It refreshes the queues, collects Eventbrite, Lu.ma, Meetup, GDG, Telegram, and WhatsApp,
-runs Ruff and pytest, then pushes only a changed sanitized `index.html`.
+It refreshes the paired queues and processes only Telegram and WhatsApp, preserving the
+previously published public-source events in the sanitized dashboard. Eventbrite, Lu.ma,
+Meetup, and GDG remain on the GitHub-hosted schedule.
 
 The supplied macOS LaunchAgent checks every 15 minutes. It runs once for the current date as
 soon as the Mac is online after 8:00 AM SGT, so a sleeping or offline laptop does not lose that
@@ -167,6 +168,7 @@ Every supported variable is listed in `.env.example`. Common tuning values inclu
 
 - `LOOKAHEAD_DAYS` and `MESSAGE_LOOKBACK_DAYS`;
 - LinkedIn profile/post caps and Eventbrite/Lu.ma/Meetup/GDG event caps;
-- `EVENTBRITE_SEARCH_URLS` and `MEETUP_SEARCH_URLS` as pipe-separated overrides;
+- `EVENTBRITE_SEARCH_URLS` and `MEETUP_SEARCH_URLS` as pipe-separated overrides, plus
+  `LUMA_SITEMAP_MAX_EVENTS` for public discovery breadth;
 - `SOURCE_FAILURE_MODE=warn|fail`; and
 - `EMAIL_ENABLED`, recipient, and SMTP transport settings.

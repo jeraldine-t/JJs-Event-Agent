@@ -21,6 +21,7 @@ USER_AGENT = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131 Safari/537.36"
 )
+DISCOVERY_QUERIES = ("AI", "data", "technology", "startup", "networking")
 
 
 def _is_meetup_event_url(url: str) -> bool:
@@ -55,9 +56,12 @@ class MeetupSource:
 
     @staticmethod
     def _urls(settings: Settings) -> tuple[str, ...]:
-        query = quote_plus(" ".join(settings.keywords))
-        return settings.meetup_search_urls or (
-            f"https://www.meetup.com/find/?keywords={query}&location=sg--Singapore&source=EVENTS",
+        if settings.meetup_search_urls:
+            return settings.meetup_search_urls
+        return tuple(
+            f"https://www.meetup.com/find/?keywords={quote_plus(query)}"
+            "&location=sg--Singapore&source=EVENTS"
+            for query in DISCOVERY_QUERIES
         )
 
     def collect(self, settings: Settings) -> list[RawEvent]:

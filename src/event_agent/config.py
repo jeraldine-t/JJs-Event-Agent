@@ -71,6 +71,7 @@ class Settings:
     luma_discovery_urls: tuple[str, ...]
     luma_private_urls: tuple[str, ...]
     luma_max_events: int
+    luma_sitemap_max_events: int
     whatsapp_user_data_dir: Path
     whatsapp_groups: tuple[str, ...]
     whatsapp_messages_per_group: int
@@ -133,7 +134,8 @@ class Settings:
             luma_cookies_json=os.getenv("LUMA_COOKIES_JSON", "").strip(),
             luma_discovery_urls=_pipes(os.getenv("LUMA_DISCOVERY_URLS")),
             luma_private_urls=_csv(os.getenv("LUMA_PRIVATE_URLS")),
-            luma_max_events=_int(os.getenv("LUMA_MAX_EVENTS"), 80),
+            luma_max_events=_int(os.getenv("LUMA_MAX_EVENTS"), 100),
+            luma_sitemap_max_events=_int(os.getenv("LUMA_SITEMAP_MAX_EVENTS"), 30),
             whatsapp_user_data_dir=(
                 whatsapp_dir if whatsapp_dir.is_absolute() else root / whatsapp_dir
             ),

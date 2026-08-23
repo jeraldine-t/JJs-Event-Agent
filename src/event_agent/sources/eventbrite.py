@@ -24,6 +24,7 @@ USER_AGENT = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131 Safari/537.36"
 )
+DISCOVERY_QUERIES = ("AI", "data", "technology", "startup", "networking")
 
 
 def _is_event_url(url: str) -> bool:
@@ -62,9 +63,12 @@ class EventbriteSource:
 
     @staticmethod
     def _urls(settings: Settings) -> tuple[str, ...]:
-        query = quote_plus(" ".join(settings.keywords))
-        return settings.eventbrite_search_urls or (
-            f"https://www.eventbrite.sg/d/singapore--singapore/free--events/?q={query}",
+        if settings.eventbrite_search_urls:
+            return settings.eventbrite_search_urls
+        return tuple(
+            "https://www.eventbrite.sg/d/singapore--singapore/free--events/"
+            f"?q={quote_plus(query)}"
+            for query in DISCOVERY_QUERIES
         )
 
     def collect(self, settings: Settings) -> list[RawEvent]:

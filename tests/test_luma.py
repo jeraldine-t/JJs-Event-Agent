@@ -7,6 +7,7 @@ from event_agent.sources.luma import (
     PUBLIC_URL,
     LumaSource,
     _is_event_url,
+    _sitemap_locations,
 )
 
 
@@ -19,6 +20,18 @@ def test_luma_event_url_detection() -> None:
     assert _is_event_url("https://lu.ma/event/abc123")
     assert not _is_event_url("https://luma.com/singapore")
     assert not _is_event_url(CURATED_DISCOVERY_URLS[0])
+
+
+def test_luma_sitemap_parser_keeps_public_urls_only() -> None:
+    xml = """
+    <urlset><url><loc>https://luma.com/ai-builders</loc></url>
+    <url><loc>https://example.com/not-luma</loc></url></urlset>
+    """
+
+    assert _sitemap_locations(xml) == [
+        "https://luma.com/ai-builders",
+        "https://example.com/not-luma",
+    ]
 
 
 def test_luma_follows_listing_event_to_detail_overview(tmp_path, monkeypatch) -> None:

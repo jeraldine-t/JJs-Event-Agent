@@ -12,6 +12,14 @@ def test_eventbrite_event_url_detection() -> None:
     assert not _is_event_url("https://example.com/e/not-eventbrite")
 
 
+def test_eventbrite_uses_separate_topic_searches_by_default(tmp_path) -> None:
+    urls = EventbriteSource._urls(Settings.from_env(tmp_path))
+
+    assert len(urls) > 1
+    assert any("q=AI" in url for url in urls)
+    assert all("AI+Data+Tech" not in url for url in urls)
+
+
 def test_eventbrite_enriches_recurring_listing_date_with_detail_overview(
     tmp_path, monkeypatch
 ) -> None:
