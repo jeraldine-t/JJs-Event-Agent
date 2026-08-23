@@ -29,6 +29,7 @@ jobs:
     timeout-minutes: 45
     env:
       TIMEZONE: Asia/Singapore
+      LOOKAHEAD_DAYS: "365"
       ENABLED_SOURCES: linkedin,eventbrite,luma,meetup,gdg
       PLAYWRIGHT_HEADLESS: "true"
       SOURCE_FAILURE_MODE: warn
