@@ -29,8 +29,8 @@ DEFAULT_SOURCE_OPTIONS = (
     ("lu.ma", "Lu.ma · Singapore"),
     ("meetup", "Meetup"),
     ("gdg", "Google Developer Groups"),
-    ("telegram · verified public page", "Telegram · verified public page"),
-    ("whatsapp · verified public page", "WhatsApp · verified public page"),
+    ("telegram · verified public page", "Telegram"),
+    ("whatsapp · verified public page", "WhatsApp"),
 )
 
 

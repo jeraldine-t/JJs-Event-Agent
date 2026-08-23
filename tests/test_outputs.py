@@ -61,7 +61,12 @@ def test_dashboard_is_self_contained_and_calendar_is_open_ended(tmp_path) -> Non
     assert "moveMonth(-1)" in html
     assert "moveMonth(1)" in html
     assert 'id="open-filters"' in html
+    assert 'id="close-filters"' in html
+    assert 'id="reset-filters"' in html
+    assert 'data-destination="agenda"' in html
     assert 'class="mobile-nav"' in html
+    assert '<option value="telegram · verified public page">Telegram</option>' in html
+    assert '<option value="whatsapp · verified public page">WhatsApp</option>' in html
     assert 'name="apple-mobile-web-app-capable"' in html
     assert "previousMonth.disabled" not in html
     assert "<style>" in html and "<script>" in html

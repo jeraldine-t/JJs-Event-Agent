@@ -12,7 +12,10 @@ backup_path=$(mktemp)
 cp "$repo_dir/index.html" "$backup_path"
 trap 'rm -f "$backup_path"' EXIT
 
-export ENABLED_SOURCES="eventbrite,luma,meetup,gdg,telegram,whatsapp"
+# This is the Mac-only worker. Public sources continue on the GitHub Actions
+# schedule; the paired-account sources below are intentionally the only ones
+# touched here.
+export ENABLED_SOURCES="telegram,whatsapp"
 export OUTPUT_HTML="$repo_dir/index.html"
 export EMAIL_ENABLED=false
 "$python_bin" -m event_agent --root "$repo_dir"
