@@ -57,7 +57,7 @@ def test_dashboard_is_self_contained_and_calendar_is_open_ended(tmp_path) -> Non
     assert 'id="month-grid"' in html
     assert 'id="calendar-jump"' in html
     assert 'value="month:2026-07"' in html
-    assert 'value="date:2026-07-20"' in html
+    assert 'value="day:2026-07-20"' in html
     assert "moveMonth(-1)" in html
     assert "moveMonth(1)" in html
     assert "previousMonth.disabled" not in html

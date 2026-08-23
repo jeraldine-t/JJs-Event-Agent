@@ -60,13 +60,14 @@
     .calendar-heading h2 { margin: 3px 0 2px; font-size: clamp(29px, 4vw, 44px); line-height: 1; letter-spacing: -.045em; }
     .calendar-heading p { margin: 8px 0 0; color: var(--muted); font-size: 13px; }
     .month-nav { display: flex; align-items: center; gap: 8px; }
-    .jump-select { max-width: 220px; }
+    .jump-select { max-width: 260px; }
     .nav-button {
       display: grid; width: 42px; height: 42px; place-items: center; border: 1px solid var(--line-strong);
       border-radius: 13px; color: var(--text); background: var(--surface); cursor: pointer;
       transition: border-color .18s ease, transform .18s ease, opacity .18s ease;
     }
     .nav-button:hover:not(:disabled) { transform: translateY(-1px); border-color: var(--mint); }
+    .nav-button, .calendar-event, .select, .search { touch-action: manipulation; }
     .nav-button:disabled { cursor: default; opacity: .28; }
     .month-scroll { overflow-x: auto; scrollbar-color: rgba(104, 233, 189, .25) transparent; }
     .calendar-canvas { min-width: 840px; }
@@ -122,6 +123,7 @@
       display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 18px;
       padding: 18px 0; border-top: 1px solid var(--line);
     }
+    .calendar-day.jump-target { border-radius: 14px; box-shadow: 0 0 0 2px var(--mint), 0 0 0 7px rgba(104, 233, 189, .12); }
     .day-rail { padding: 6px 0 0; }
     .day-rail strong { display: block; color: var(--lime); font-size: 42px; line-height: .95; letter-spacing: -.05em; }
     .day-rail span { color: var(--muted); font-size: 12px; }
@@ -177,10 +179,18 @@
       .app-header { align-items: flex-start; }
       .brand-mark { width: 38px; height: 38px; }
       .last-updated { max-width: 128px; }
-      .calendar-heading { align-items: center; padding: 19px 18px 16px; }
+      .calendar-heading { display: block; padding: 19px 18px 16px; }
       .calendar-heading p { display: none; }
-      .calendar-canvas { min-width: 700px; }
-      .month-cell { min-height: 98px; padding: 7px; }
+      .month-nav { display: grid; grid-template-columns: minmax(0, 1fr) 44px 44px; margin-top: 14px; }
+      .jump-select { max-width: none; min-width: 0; }
+      .month-scroll { overflow-x: visible; }
+      .calendar-canvas { min-width: 0; width: 100%; }
+      .weekday-row span { padding: 8px 2px; text-align: center; font-size: 9px; letter-spacing: .04em; }
+      .month-cell { min-height: 78px; padding: 5px 3px; overflow: hidden; }
+      .day-number { width: 23px; height: 23px; margin-bottom: 2px; font-size: 11px; }
+      .calendar-event { display: block; margin-top: 3px; padding: 3px; border-radius: 6px; font-size: 9px; }
+      .calendar-event time { display: block; font-size: 8px; }
+      .calendar-event span { display: block; }
       .calendar-footer { align-items: flex-start; }
       .calendar-footer span:first-child { max-width: 210px; }
       .toolbar { grid-template-columns: 1fr; }
@@ -191,7 +201,9 @@
       .calendar-day { grid-template-columns: 1fr; gap: 9px; }
       .day-rail { display: flex; align-items: baseline; gap: 10px; }
       .day-rail strong { font-size: 31px; }
-      .event-card { padding: 18px; }
+      .event-card { padding: 16px; border-radius: 18px; }
+      .event-card h4 { margin-top: 11px; font-size: 21px; }
+      .summary { font-size: 14px; }
     }
   </style>
 </head>
@@ -213,12 +225,18 @@
           <p>See your month at a glance, then jump directly to any event’s details.</p>
         </div>
         <nav class="month-nav" aria-label="Calendar month navigation">
-          <select class="select jump-select" id="calendar-jump" aria-label="Jump to month or date">
-            <option value="">Jump to month or date…</option>
+          <select class="select jump-select" id="calendar-jump" aria-label="Jump to month or event day">
+            <option value="">Jump to month or event day…</option>
+            <optgroup label="Months">
             {% for month in calendar_months if month.month_key >= initial_month %}
             <option value="month:{{ month.month_key }}">{{ month.month_label }}</option>
-            {% for day in month.days %}<option value="date:{{ day.date_key }}">↳ {{ day.date_label }}</option>{% endfor %}
             {% endfor %}
+            </optgroup>
+            <optgroup label="Event days">
+            {% for month in calendar_months if month.month_key >= initial_month %}
+            {% for day in month.days %}<option value="day:{{ day.date_key }}">{{ day.date_label }}</option>{% endfor %}
+            {% endfor %}
+            </optgroup>
           </select>
           <button class="nav-button" id="previous-month" type="button" aria-label="Previous month">←</button>
           <button class="nav-button" id="next-month" type="button" aria-label="Next month">→</button>
@@ -461,9 +479,11 @@
       activeYear = year;
       activeMonth = month - 1;
       renderMonth();
-      if (kind === 'date' && day) {
-        document.querySelector(`.calendar-day[data-date="${value}"]`)
-          ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (kind === 'day' && day) {
+        const target = document.querySelector(`.calendar-day[data-date="${value}"]`);
+        target?.classList.add('jump-target');
+        target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        window.setTimeout(() => target?.classList.remove('jump-target'), 1800);
       }
     });
     search.addEventListener('input', filterCards);

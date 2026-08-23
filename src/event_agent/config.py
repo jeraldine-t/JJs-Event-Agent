@@ -17,6 +17,16 @@ DEFAULT_KEYWORDS = (
     "Marketing",
     "Business",
     "Networking",
+    "Founders",
+    "Startups",
+    "Entrepreneurship",
+    "Venture",
+    "Presales",
+    "Sales",
+    "Leadership",
+    "Innovation",
+    "Community",
+    "Future of Work",
 )
 
 

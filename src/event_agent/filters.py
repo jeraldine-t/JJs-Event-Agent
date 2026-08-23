@@ -44,6 +44,16 @@ KEYWORD_PATTERNS: dict[str, re.Pattern[str]] = {
         re.I,
     ),
     "Networking": re.compile(r"\b(?:networking|network with|connect with|meet fellow)\b", re.I),
+    "Founders": re.compile(r"\b(?:founder|founders)\b", re.I),
+    "Startups": re.compile(r"\bstart[- ]?ups?\b", re.I),
+    "Entrepreneurship": re.compile(r"\bentrepreneur(?:ship|ial)?s?\b", re.I),
+    "Venture": re.compile(r"\b(?:venture|VC|venture capital)\b", re.I),
+    "Presales": re.compile(r"\bpre[- ]?sales\b", re.I),
+    "Sales": re.compile(r"\bsales?\b", re.I),
+    "Leadership": re.compile(r"\bleadership\b", re.I),
+    "Innovation": re.compile(r"\binnovations?\b", re.I),
+    "Community": re.compile(r"\bcommunities?|community\b", re.I),
+    "Future of Work": re.compile(r"\bfuture\s+of\s+work\b", re.I),
 }
 
 PERK_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
