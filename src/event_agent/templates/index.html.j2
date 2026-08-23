@@ -60,6 +60,7 @@
     .calendar-heading h2 { margin: 3px 0 2px; font-size: clamp(29px, 4vw, 44px); line-height: 1; letter-spacing: -.045em; }
     .calendar-heading p { margin: 8px 0 0; color: var(--muted); font-size: 13px; }
     .month-nav { display: flex; align-items: center; gap: 8px; }
+    .jump-select { max-width: 220px; }
     .nav-button {
       display: grid; width: 42px; height: 42px; place-items: center; border: 1px solid var(--line-strong);
       border-radius: 13px; color: var(--text); background: var(--surface); cursor: pointer;
@@ -212,6 +213,13 @@
           <p>See your month at a glance, then jump directly to any event’s details.</p>
         </div>
         <nav class="month-nav" aria-label="Calendar month navigation">
+          <select class="select jump-select" id="calendar-jump" aria-label="Jump to month or date">
+            <option value="">Jump to month or date…</option>
+            {% for month in calendar_months %}
+            <option value="month:{{ month.month_key }}">{{ month.month_label }}</option>
+            {% for day in month.days %}<option value="date:{{ day.date_key }}">↳ {{ day.date_label }}</option>{% endfor %}
+            {% endfor %}
+          </select>
           <button class="nav-button" id="previous-month" type="button" aria-label="Previous month">←</button>
           <button class="nav-button" id="next-month" type="button" aria-label="Next month">→</button>
         </nav>
@@ -313,6 +321,7 @@
     const monthGrid = document.querySelector('#month-grid');
     const previousMonth = document.querySelector('#previous-month');
     const nextMonth = document.querySelector('#next-month');
+    const calendarJump = document.querySelector('#calendar-jump');
     const [initialYear, initialMonth] = '{{ initial_month }}'.split('-').map(Number);
     let activeYear = initialYear;
     let activeMonth = initialMonth - 1;
@@ -445,6 +454,18 @@
 
     previousMonth.addEventListener('click', () => moveMonth(-1));
     nextMonth.addEventListener('click', () => moveMonth(1));
+    calendarJump.addEventListener('change', () => {
+      const [kind, value] = calendarJump.value.split(':');
+      if (!kind || !value) return;
+      const [year, month, day] = value.split('-').map(Number);
+      activeYear = year;
+      activeMonth = month - 1;
+      renderMonth();
+      if (kind === 'date' && day) {
+        document.querySelector(`.calendar-day[data-date="${value}"]`)
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
     search.addEventListener('input', filterCards);
     source.addEventListener('change', filterCards);
     fnb.addEventListener('change', filterCards);

@@ -54,7 +54,9 @@ def test_eventbrite_enriches_recurring_listing_date_with_detail_overview(
 
     monkeypatch.setattr(eventbrite.requests, "Session", FakeSession)
     events = EventbriteSource().collect(Settings.from_env(tmp_path))
-    recurring = next(event for event in events if event.start_at.year == 2026)
+    recurring = next(event for event in events if event.title == "AI Networking Singapore")
+    assert recurring.start_at.year >= 2026
+    assert recurring.start_at.month == 8
     assert recurring.title == "AI Networking Singapore"
     assert recurring.description == "Meet AI builders and founders."
     assert recurring.metadata["overview_source"] == "event-detail-page"

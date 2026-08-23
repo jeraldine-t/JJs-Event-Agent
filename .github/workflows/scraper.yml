@@ -1,7 +1,11 @@
 name: Daily event scrape and Pages deploy
 
 on:
-  # Automation is paused while source failures are investigated.
+  schedule:
+    - cron: "0 8 * * 1-6"
+      timezone: "Asia/Singapore"
+    - cron: "0 8 * * 0"
+      timezone: "Asia/Singapore"
   workflow_dispatch:
     inputs:
       refresh_data:
@@ -28,7 +32,7 @@ jobs:
       ENABLED_SOURCES: linkedin,eventbrite,luma,meetup,gdg
       PLAYWRIGHT_HEADLESS: "true"
       SOURCE_FAILURE_MODE: warn
-      # Email delivery is intentionally paused. Dashboard refreshes continue as scheduled.
+      # Email delivery remains intentionally paused. Dashboard refreshes run as scheduled.
       EMAIL_ENABLED: "false"
       EMAIL_RECIPIENT: ${{ secrets.EMAIL_RECIPIENT }}
       SMTP_HOST: ${{ secrets.SMTP_HOST }}
